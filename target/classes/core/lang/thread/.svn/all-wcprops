@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/thread
+END
+ThreadPool.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/thread/ThreadPool.java
+END
+ThreadManager.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/thread/ThreadManager.java
+END
+PersistentRunnable.java
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/thread/PersistentRunnable.java
+END
+RunnableContainer.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/thread/RunnableContainer.java
+END
+ThreadPoolsConfig.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/thread/ThreadPoolsConfig.java
+END
+Threads.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/thread/Threads.java
+END
+BalancedTaskExecutor.java
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/thread/BalancedTaskExecutor.java
+END

@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/webserver
+END
+Apache.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/webserver/Apache.java
+END
+HttpWebServer.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/webserver/HttpWebServer.java
+END
+ApacheFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/webserver/ApacheFactory.java
+END
+HttpWebServerFactory.java
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/webserver/HttpWebServerFactory.java
+END

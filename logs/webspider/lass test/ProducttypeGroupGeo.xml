@@ -1,0 +1,214 @@
+
+
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml" >
+<head><title>
+	Citybreak&trade; API
+</title><link rel="stylesheet" href="Style.css" type="text/css" />
+
+<style type="text/css">
+	
+
+.login
+{
+	display: block;
+	margin-right: auto;
+	margin-left: auto;
+	margin-top: 60px;
+	margin-bottom: 90px;
+	border: solid 1px black;
+	padding: 15px;
+}
+
+.ValidatorError
+{
+	margin-top: 50px;
+}
+
+</style>
+
+<style type="text/css">
+	/* <![CDATA[ */
+	#Menu1 img.icon { border-style:none;vertical-align:middle; }
+	#Menu1 img.separator { border-style:none;display:block; }
+	#Menu1 img.horizontal-separator { border-style:none;vertical-align:middle; }
+	#Menu1 ul { list-style:none;margin:0;padding:0;width:auto; }
+	#Menu1 ul.dynamic { z-index:1; }
+	#Menu1 a { text-decoration:none;white-space:nowrap;display:block; }
+	#Menu1 a.static { padding-left:0.15em;padding-right:0.15em; }
+	#Menu1 a.popout { background-image:url("/WebResource.axd?d=_ZKX4J9jzIfoqzclLBvExy6gZ-ugJk9ivBgPyihN2jQ1&t=634849108529938508");background-repeat:no-repeat;background-position:right center;padding-right:14px; }
+	#Menu1 a.dynamic { padding:3px 5px 3px 5px;text-decoration:none; }
+	#Menu1 a.level1 { padding:0px 10px 0px 10px;color:White;font-weight:bold;text-decoration:none; }
+	/* ]]> */
+</style></head>
+<body>
+
+
+    <form method="post" action="Default.aspx" onsubmit="javascript:return WebForm_OnSubmit();" id="form1">
+<div class="aspNetHidden">
+<input type="hidden" name="__EVENTTARGET" id="__EVENTTARGET" value="" />
+<input type="hidden" name="__EVENTARGUMENT" id="__EVENTARGUMENT" value="" />
+<input type="hidden" name="__VIEWSTATE" id="__VIEWSTATE" value="/wEPDwUJODcxNzE4MjM3D2QWAmYPZBYCAgMPZBYEAgMPPCsADQMADxYCHgtfIURhdGFCb3VuZGdkCRAWABYAZAwUKwAEBQswOjAsMDoxLDA6MhQrAAIWEB4EVGV4dAUESG9tZR4FVmFsdWUFBEhvbWUeC05hdmlnYXRlVXJsBQovV2ViL1VzZXIvHgdUb29sVGlwBRlBZG1pbmlzdHJhdGUgeW91ciBhY2NvdW50HgdFbmFibGVkZx4KU2VsZWN0YWJsZWceCERhdGFQYXRoBQovd2ViL3VzZXIvHglEYXRhQm91bmRnFCsAAwUHMDowLDA6MRQrAAIWEB8BBQxZb3VyIGFjY291bnQfAgUMWW91ciBhY2NvdW50HwMFFi9XZWIvVXNlci9BY2NvdW50LmFzcHgfBAUYWW91ciBjb250YWN0IGluZm9ybWF0aW9uHwVnHwZnHwcFFi93ZWIvdXNlci9hY2NvdW50LmFzcHgfCGdkFCsAAhYQHwEFC1lvdXIgZ3VpZGVzHwIFC1lvdXIgZ3VpZGVzHwMFFS9XZWIvVXNlci9HdWlkZXMuYXNweB8EBSFHZXQgaW5mb3JtYXRpb24gYWJvdXQgeW91ciBndWlkZXMfBWcfBmcfBwUVL3dlYi91c2VyL2d1aWRlcy5hc3B4HwhnZBQrAAIWEB8BBQNGQVEfAgUDRkFRHwMFCS9XZWIvRmFxLx8EBR9Zb3VycyBhbmQgb3RoZXIgdXNlcnMgcXVlc3Rpb25zHwVnHwZnHwcFCS93ZWIvZmFxLx8IZ2QUKwACFhAfAQULV2ViIHNlcnZpY2UfAgULV2ViIHNlcnZpY2UfAwUBLx8EBRRMaXN0IG9mIHdlYiBzZXJ2aWNlcx8FZx8GZx8HBQEvHwhnFCsACQUfMDowLDA6MSwwOjIsMDozLDA6NCwwOjUsMDo2LDA6NxQrAAIWDh8BBQ1Mb2dpbiBzZXJ2aWNlHwIFDUxvZ2luIHNlcnZpY2UfAwUSL0xvZ2luU2VydmljZS5hc214HwVnHwZnHwcFEi9sb2dpbnNlcnZpY2UuYXNteB8IZ2QUKwACFg4fAQUSQm9va2luZyBvcGVyYXRpb25zHwIFEkJvb2tpbmcgb3BlcmF0aW9ucx8DBRcvQm9va2luZ09wZXJhdGlvbnMuYXNteB8FZx8GZx8HBRcvYm9va2luZ29wZXJhdGlvbnMuYXNteB8IZ2QUKwACFg4fAQUdT25saW5lIGd1aWRlIHNwZWNpZmljIG1ldGhvZHMfAgUdT25saW5lIGd1aWRlIHNwZWNpZmljIG1ldGhvZHMfAwUUL09ubGluZUluc3RhbmNlLmFzbXgfBWcfBmcfBwUUL29ubGluZWluc3RhbmNlLmFzbXgfCGdkFCsAAhYOHwEFHU9yZ2FuaXphdGlvbiBzcGVjaWZpYyBtZXRob2RzHwIFHU9yZ2FuaXphdGlvbiBzcGVjaWZpYyBtZXRob2RzHwMFGC9PbmxpbmVPcmdhbml6YXRpb24uYXNteB8FZx8GZx8HBRgvb25saW5lb3JnYW5pemF0aW9uLmFzbXgfCGdkFCsAAhYOHwEFGVdlYiBzZXJ2aWNlIGZ1bmN0aW9uYWxpdHkfAgUZV2ViIHNlcnZpY2UgZnVuY3Rpb25hbGl0eR8DBQ4vT25saW5lV1MuYXNteB8FZx8GZx8HBQ4vb25saW5ld3MuYXNteB8IZ2QUKwACFg4fAQUPUGFja2FnZSBzZXJ2aWNlHwIFD1BhY2thZ2Ugc2VydmljZR8DBRQvUGFja2FnZVNlcnZpY2UuYXNteB8FZx8GZx8HBRQvcGFja2FnZXNlcnZpY2UuYXNteB8IZ2QUKwACFg4fAQUWUG9pbnQgb2Ygc2FsZXMgc2VydmljZR8CBRZQb2ludCBvZiBzYWxlcyBzZXJ2aWNlHwMFEC9TYWxlc3BvaW50LmFzbXgfBWcfBmcfBwUQL3NhbGVzcG9pbnQuYXNteB8IZ2QUKwACFg4fAQUVVXRpbGl0eSBmdW5jdGlvbmFsaXR5HwIFFVV0aWxpdHkgZnVuY3Rpb25hbGl0eR8DBQsvVXRpbHMuYXNteB8FZx8GZx8HBQsvdXRpbHMuYXNteB8IZ2RkAgYPZBYCAgMPZBYCAgUPFgIfAQUMTm9uZSBkZWZpbmVkZGS1cH7L7agYuIMv7evbE1dfKfF8vg==" />
+</div>
+
+<script type="text/javascript">
+//<![CDATA[
+var theForm = document.forms['form1'];
+if (!theForm) {
+    theForm = document.form1;
+}
+function __doPostBack(eventTarget, eventArgument) {
+    if (!theForm.onsubmit || (theForm.onsubmit() != false)) {
+        theForm.__EVENTTARGET.value = eventTarget;
+        theForm.__EVENTARGUMENT.value = eventArgument;
+        theForm.submit();
+    }
+}
+//]]>
+</script>
+
+
+<script src="/WebResource.axd?d=YpZILcZYB3if-8Hp0LysWg2&amp;t=634849108529938508" type="text/javascript"></script>
+
+
+<script src="/WebResource.axd?d=mC_L6uY54dbQVBa_uaFkUckNH5a3IxeR8JKvOxBdLV81&amp;t=634849108529938508" type="text/javascript"></script>
+<script src="/WebResource.axd?d=N9nXr8iuZPknFbXlVMUv_lDVzoh-RgNT3dg0qngSZvU1&amp;t=634849108529938508" type="text/javascript"></script>
+<script type="text/javascript">
+//<![CDATA[
+function WebForm_OnSubmit() {
+if (typeof(ValidatorOnSubmit) == "function" && ValidatorOnSubmit() == false) return false;
+return true;
+}
+//]]>
+</script>
+
+<div class="aspNetHidden">
+
+	<input type="hidden" name="__EVENTVALIDATION" id="__EVENTVALIDATION" value="/wEWBgL90JnTAwL7qYWMCgLC7+DnCgLaptSZDAL8v97XBgLH95YUQad20RC8qdHL2ZjDnaCsiLdZIi4=" />
+</div>
+		<div class="Container">
+			<div class="Border1">
+				<div class="Border2">
+					<div class="Header">
+						<h1>
+							Citybreak&trade; Booking API, Built: 2012-12-19 12:58:48
+							&nbsp;-&nbsp; 
+Authentication
+
+						</h1>
+						<div style="float: right; color: White; font-weight: bold; padding-right: 10px;">
+							
+						</div>
+						<div >
+							
+							
+							<a href="#Menu1_SkipLink"><img alt="Skip Navigation Links" src="/WebResource.axd?d=_q4JkFkF9HNemn6apTxH7g2&amp;t=634849108529938508" width="0" height="0" style="border-width:0px;" /></a><div id="Menu1">
+	<ul class="level1">
+		<li><a title="Administrate your account" class="popout level1" href="/Web/User/">Home</a><ul class="level2">
+			<li><a title="Your contact information" class="level2" href="/Web/User/Account.aspx">Your account</a></li><li><a title="Get information about your guides" class="level2" href="/Web/User/Guides.aspx">Your guides</a></li>
+		</ul></li><li><a title="Yours and other users questions" class="level1" href="/Web/Faq/">FAQ</a></li><li><a title="List of web services" class="popout level1" href="/">Web service</a><ul class="level2">
+			<li><a class="level2" href="/LoginService.asmx">Login service</a></li><li><a class="level2" href="/BookingOperations.asmx">Booking operations</a></li><li><a class="level2" href="/OnlineInstance.asmx">Online guide specific methods</a></li><li><a class="level2" href="/OnlineOrganization.asmx">Organization specific methods</a></li><li><a class="level2" href="/OnlineWS.asmx">Web service functionality</a></li><li><a class="level2" href="/PackageService.asmx">Package service</a></li><li><a class="level2" href="/Salespoint.asmx">Point of sales service</a></li><li><a class="level2" href="/Utils.asmx">Utility functionality</a></li>
+		</ul></li>
+	</ul>
+</div><a id="Menu1_SkipLink"></a>
+						</div>
+						<div style="float: right; padding-right: 10px">
+						    
+						    <a href="javascript:WebForm_DoPostBackWithOptions(new WebForm_PostBackOptions(&quot;ctl00$ctl04&quot;, &quot;&quot;, true, &quot;&quot;, &quot;&quot;, false, true))">Logout</a>
+						</div>
+					</div>
+
+					<div class="Padding">
+						
+
+		<div id="content_phLogin" onkeypress="javascript:return WebForm_FireDefaultButton(event, &#39;content_lbLogin&#39;)">
+	
+
+		
+		<table class="login">
+			<tr>
+				<td>Username</td>
+				<td><input name="ctl00$content$txtUsername" type="text" id="content_txtUsername" class="textbox" /></td>
+			</tr>
+			<tr>
+				<td>Password</td>
+				<td><input name="ctl00$content$txtPassword" type="password" id="content_txtPassword" class="textbox" /></td>
+			</tr>
+			<tr>
+				<td>&nbsp;</td>
+				<td style="text-align: right">
+					<a id="content_lbLogin" href="javascript:WebForm_DoPostBackWithOptions(new WebForm_PostBackOptions(&quot;ctl00$content$lbLogin&quot;, &quot;&quot;, true, &quot;&quot;, &quot;&quot;, false, true))">Login</a>
+				</td>
+			</tr>
+			<tr>
+				<td colspan="2">
+		<span id="content_valLoginFail" style="display:none;">Login failed</span>
+				</td>
+			</tr>
+		</table>
+
+		
+</div>
+		
+		
+			<p>
+				You are authenticated as: 
+			</p>
+
+			<p>
+				<a id="content_LinkButton1" href="javascript:WebForm_DoPostBackWithOptions(new WebForm_PostBackOptions(&quot;ctl00$content$LinkButton1&quot;, &quot;&quot;, true, &quot;&quot;, &quot;&quot;, false, true))">Log out</a>
+			</p>
+			
+
+			<p>
+				Branch: None defined
+			</p>
+		
+    
+    
+
+	                </div>
+	                
+		        </div>
+            </div>
+        </div>    
+    
+<script type="text/javascript">
+//<![CDATA[
+var Page_Validators =  new Array(document.getElementById("content_valLoginFail"));
+//]]>
+</script>
+
+<script type="text/javascript">
+//<![CDATA[
+var content_valLoginFail = document.all ? document.all["content_valLoginFail"] : document.getElementById("content_valLoginFail");
+content_valLoginFail.errormessage = "Login failed";
+content_valLoginFail.display = "Dynamic";
+content_valLoginFail.evaluationfunction = "CustomValidatorEvaluateIsValid";
+//]]>
+</script>
+
+<script type='text/javascript'>new Sys.WebForms.Menu({ element: 'Menu1', disappearAfter: 500, orientation: 'horizontal', tabIndex: 0, disabled: false });</script>
+<script type="text/javascript">
+//<![CDATA[
+
+var Page_ValidationActive = false;
+if (typeof(ValidatorOnLoad) == "function") {
+    ValidatorOnLoad();
+}
+
+function ValidatorOnSubmit() {
+    if (Page_ValidationActive) {
+        return ValidatorCommonOnSubmit();
+    }
+    else {
+        return true;
+    }
+}
+        //]]>
+</script>
+</form>
+</body>
+</html>

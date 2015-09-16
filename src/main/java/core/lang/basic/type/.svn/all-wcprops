@@ -1,0 +1,65 @@
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/basic/type
+END
+CharType.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/basic/type/CharType.java
+END
+IntegerType.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/basic/type/IntegerType.java
+END
+BooleanType.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/basic/type/BooleanType.java
+END
+LongType.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/basic/type/LongType.java
+END
+ShortType.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/basic/type/ShortType.java
+END
+ByteArrayType.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/basic/type/ByteArrayType.java
+END
+ByteType.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/basic/type/ByteType.java
+END
+FloatType.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/basic/type/FloatType.java
+END
+StringType.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/basic/type/StringType.java
+END
+DoubleType.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/basic/type/DoubleType.java
+END

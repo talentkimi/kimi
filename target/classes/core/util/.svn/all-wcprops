@@ -1,0 +1,275 @@
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util
+END
+WeeklyScheduler.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/WeeklyScheduler.java
+END
+Percent.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/Percent.java
+END
+Encapsulator.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/Encapsulator.java
+END
+WatchDog.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/WatchDog.java
+END
+Assert.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/Assert.java
+END
+CacheMap.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/CacheMap.java
+END
+WeakReferenceList.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/WeakReferenceList.java
+END
+Cache.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/Cache.java
+END
+UniversalTimeoutCache.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/UniversalTimeoutCache.java
+END
+ImmutableObject.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/ImmutableObject.java
+END
+NullExecutorException.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/NullExecutorException.java
+END
+TimeoutCache.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/TimeoutCache.java
+END
+Scheduler.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/Scheduler.java
+END
+FieldList.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/FieldList.java
+END
+ConfigClassDirectory.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/ConfigClassDirectory.java
+END
+Listenable.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/Listenable.java
+END
+ClosableHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/ClosableHandler.java
+END
+ScheduledTask.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/ScheduledTask.java
+END
+Binary.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/Binary.java
+END
+UtilBytes.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/UtilBytes.java
+END
+RangeSelector.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/RangeSelector.java
+END
+TaskList.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/TaskList.java
+END
+DailyScheduler.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/DailyScheduler.java
+END
+Task.java
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/Task.java
+END
+EmptyListIterator.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/EmptyListIterator.java
+END
+EmptyIterator.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/EmptyIterator.java
+END
+UtilList.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/UtilList.java
+END
+SubversionInfo.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/SubversionInfo.java
+END
+UtilDate.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/UtilDate.java
+END
+UtilMap.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/UtilMap.java
+END
+Timer.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/Timer.java
+END
+Random.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/Random.java
+END
+HourlyScheduler.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/HourlyScheduler.java
+END
+Listener.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/Listener.java
+END
+LockMap.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/LockMap.java
+END
+CountMap.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/CountMap.java
+END
+GlobalConfig.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/GlobalConfig.java
+END
+PairList.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/PairList.java
+END
+Pair.java
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/Pair.java
+END
+ConfigClass.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/ConfigClass.java
+END
+ConfigClassFile.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/ConfigClassFile.java
+END
+NanoTimer.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/NanoTimer.java
+END
+UtilDate1.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/UtilDate1.java
+END
+UtilTime.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/UtilTime.java
+END
+ParamMap.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/ParamMap.java
+END

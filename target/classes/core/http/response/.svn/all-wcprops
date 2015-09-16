@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/response
+END
+HttpResponseApache.java
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/response/HttpResponseApache.java
+END
+HttpResponseHeaderList.java
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/response/HttpResponseHeaderList.java
+END
+HttpResponseApacheHeaderList.java
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/response/HttpResponseApacheHeaderList.java
+END
+HttpResponseCodeList.java
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/response/HttpResponseCodeList.java
+END
+HttpReason.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/response/HttpReason.java
+END
+HttpCode.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/response/HttpCode.java
+END
+HttpResponse.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/response/HttpResponse.java
+END

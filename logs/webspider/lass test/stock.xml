@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema">
+	<soap:Body>
+		<getStockInfoByCodeResponse xmlns="http://WebXml.com.cn/">
+			<getStockInfoByCodeResult>
+				<string>sh603997</string>
+				<string>提示信息：已关闭数据服务。</string>
+				<string>2015-05-28 14:38:09</string>
+				<string />
+				<string />
+				<string />
+				<string />
+				<string />
+				<string />
+				<string />
+				<string />
+				<string />
+				<string />
+				<string />
+				<string />
+				<string />
+				<string />
+				<string />
+				<string />
+				<string />
+				<string />
+				<string />
+				<string />
+				<string />
+				<string />
+			</getStockInfoByCodeResult>
+		</getStockInfoByCodeResponse>
+	</soap:Body>
+</soap:Envelope>

@@ -1,0 +1,47 @@
+package core.util;
+
+import org.dom4j.Document;
+import org.dom4j.Node;
+import org.dom4j.io.SAXReader;
+import org.springframework.core.io.ClassPathResource;
+import org.springframework.core.io.Resource;
+
+import java.io.Serializable;
+
+/**
+ * @author Yoav Hakman
+ */
+public class SubversionInfo implements Serializable {
+
+    private static final String DEFAULT_BUILD_INFO_XML = "build_info.xml";
+
+    private String url;
+    private String revision;
+
+    public SubversionInfo(Resource resource) throws RuntimeException {
+        try {
+            SAXReader reader = new SAXReader();
+            Document document = reader.read(resource.getURL());
+            Node node = document.selectSingleNode("//info/entry/url");
+            this.url = node.getText();
+            Node node1 = document.selectSingleNode("//info/entry");
+            this.revision = node1.valueOf("@revision");
+        } catch (RuntimeException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    public SubversionInfo() throws RuntimeException {
+        this(new ClassPathResource(DEFAULT_BUILD_INFO_XML));
+    }
+
+    public String getUrl() {
+        return url;
+    }
+
+    public String getRevision() {
+        return revision;
+    }
+}

@@ -1,0 +1,267 @@
+package core.util;
+
+import java.io.Closeable;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.ScheduledFuture;
+import java.util.concurrent.TimeUnit;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import core.lang.thread.ThreadPool;
+import core.lang.thread.ThreadPool.Worker;
+import core.nonblocking.NonBlockingRequestThreadManagerFactory;
+
+/**
+ * WatchDog timer realization. It periodically checks registered threads for timeout and interrupts the hanged threads. 
+ * @author Dimitrijs
+ *
+ */
+public class WatchDog {
+
+	private static final Logger log = LoggerFactory.getLogger(WatchDog.class);
+	private static final Logger monitorLog = LoggerFactory.getLogger(WatchDog.class.getName() + ".Monitor");
+
+	private static final ScheduledExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+	/* Just stub around Info */
+	private static final Info stubInfo = new Info() {
+		@Override public void cancel() { }
+		@Override public boolean isTimedOut() { return false; }
+		@Override public long getTimeout() { return 0; }
+	};
+
+	/**
+	 * Registers current thread. It just calls {@code watch(timeout, null)}.
+	 * @param timeout
+	 * @return Info to use to cancel or expand this watch.
+	 * @see #watch(long, Object)
+	 */
+	public static Info watch(long timeout) {
+		return watch(timeout, true, null);
+	}
+	
+	/**
+	 * Registers current thread and attaches instance of {@link Closeable}. 
+	 * Timeout causes not only thread interruption, but closing specified closeable as well.
+	 * @param timeout
+	 * @param terminateThread should be thread marked as terminated if timeout is occured.
+	 * @param closeable instance of {@link Closeable}
+	 * @return Info to use to cancel or expand this watch.
+	 */
+	public static Info watch(long timeout, boolean terminateThread, Closeable closeable) {
+		if (timeout <= 0) {
+			return stubInfo;
+		}
+
+		final Thread thread = Thread.currentThread();
+		final String taskName = resolveTaskName();
+		
+//		QuickStatsEngine2.engine.WATCHING_THREAD.logEvent(taskName);
+		if (log.isDebugEnabled()) log.debug("Task " + taskName + " is registered for watching (timeout: " + timeout + "ms)");
+		
+		final TaskKiller wdworker = new TaskKiller(timeout, thread, terminateThread, closeable, taskName);
+		final ScheduledFuture<?> future = executor.schedule(wdworker, timeout, TimeUnit.MILLISECONDS);
+		wdworker.setFuture(future);
+		return wdworker;
+	}
+
+	/**
+	 * Monitors current thread. 
+	 * If timeout is occured just logs message to <code>core.util.WatchDog.Monitor</code> logger as warning.
+	 * Logged message includes stack trace.   
+	 * @param timeout
+	 * @return Info to use to cancel or expand this monitor.
+	 */
+	public static Info monitor(long timeout) {
+		if (timeout <= 0) {
+			return stubInfo;
+		}
+
+		final Thread thread = Thread.currentThread();
+		final String taskName = resolveTaskName();
+		
+		if (monitorLog.isDebugEnabled()) monitorLog.debug("WatchDog.Monitor: Task " + taskName + " is registered for monitoring (timeout: " + timeout + "ms)");
+		
+		final TaskMonitor wdworker = new TaskMonitor(timeout, thread, taskName);
+		final ScheduledFuture<?> future = executor.schedule(wdworker, timeout, TimeUnit.MILLISECONDS);
+		wdworker.setFuture(future);
+		return wdworker;
+	}
+
+	private static String resolveTaskName() {
+		final Thread thread = Thread.currentThread();
+		String name = null;
+		Worker worker = ThreadPool.forThread(thread);
+		if (worker != null) {
+			name = worker.getName();
+		} else {
+			try{
+				if (NonBlockingRequestThreadManagerFactory.getNonBlockingRequestThreadManager().containsThread(thread))
+				{
+					name = "c5: NIO processing thread";
+				}
+			}catch (Exception l_e){
+				// and throw it away.
+			}
+		}
+
+		if (name == null) {
+			return thread.getName();
+		}
+		
+		return name;
+	}
+	
+	public static interface Info {
+		/**
+		 * Cancels watching of the represent thread.
+		 */
+		public void cancel();
+		/**
+		 * Returns true if the watched thread was interrupted by watchdog.
+		 * @return true if the watched thread was interrupted by watchdog.
+		 */
+		public boolean isTimedOut();
+		/**
+		 * Gets current timeout for this watching.
+		 * @return current timeout for this watching.
+		 */
+		public long getTimeout();
+	}
+	
+	private abstract static class AbstractWatchDogWorker implements Info, Runnable {
+		protected final Thread thread;
+		protected final String taskName;
+		protected volatile long timeout;
+		private volatile boolean cancelled = false;
+		private volatile boolean isTimedOut = false;
+		private volatile ScheduledFuture<?> future;
+		
+		public AbstractWatchDogWorker(long timeout, Thread thread, String taskName) {
+			this.timeout = timeout;
+			this.thread = thread;
+			this.taskName = taskName;
+		}
+
+		protected abstract void doTimeout();
+		protected abstract void doCancel();
+		
+		protected String getStackTrace() {
+			StackTraceElement[] st = thread.getStackTrace();
+			StringBuilder result = new StringBuilder();
+			for (StackTraceElement e : st) {
+				result.append(e.toString()).append('\n');
+			}
+			return result.toString();
+		}
+		
+		@Override
+		public void run() {
+			if (cancelled || !thread.isAlive()) {
+				return;
+			}
+			
+			isTimedOut = true;
+			doTimeout();
+		}
+
+		@Override
+		public void cancel() {
+			if (future != null) {
+				future.cancel(false);
+			}
+			if (!(isTimedOut || cancelled)) {
+				doCancel();
+			}
+			this.cancelled = true;
+		}
+
+		@Override
+		public boolean isTimedOut() {
+			return isTimedOut;
+		}
+
+		@Override
+		public long getTimeout() {
+			return timeout;
+		}
+
+		public void setFuture(ScheduledFuture<?> future) {
+			this.future = future;
+		}
+	}
+	
+	private static class TaskMonitor extends AbstractWatchDogWorker {
+
+		public TaskMonitor(long timeout, Thread thread, String taskName) {
+			super(timeout, thread, taskName);
+		}
+
+		@Override
+		protected void doCancel() {
+		}
+
+		@Override
+		protected void doTimeout() {
+			if (monitorLog.isWarnEnabled()) {
+				monitorLog.warn("WatchDog.Monitor: Task " + taskName + " took too long [" + timeout + "ms]. Stack trace:" + getStackTrace());
+			}
+//			QuickStatsEngine2.engine.WATCHDOG_TIMEOUTS_MORE_THAN_10S.logEvent(taskName);
+		}
+		
+	}
+	
+	private static class TaskKiller extends AbstractWatchDogWorker {
+		private final Closeable closeable;
+		private final boolean terminateThread;
+
+		public TaskKiller(long timeout, Thread thread, boolean terminateThread, Closeable closeable, String taskName) {
+			super(timeout, thread, taskName);
+			this.closeable = closeable;
+			this.terminateThread = terminateThread;
+		}
+
+		@Override
+		protected void doTimeout() {
+			if (log.isErrorEnabled()) {
+				log.error("Task " + taskName + " is timed out [" + timeout + "]. Stack trace:" + getStackTrace());
+			}
+//			QuickStatsEngine2.engine.WATCHDOG_TIMEOUTS.logEvent(taskName);
+			if (closeable != null) {
+				
+				if (log.isTraceEnabled()) {
+					log.trace("Task " + taskName + ". Trying to close attached closeable object.");
+				}
+				
+				/*
+				 * TODO: Need to think a lot what we must do if closing will block? 
+				 * Normally it should not happen, but theoretically is possible.
+				 * Add another one watchdog for watching this watchdog?
+				 * Run closing in separate thread(s)?
+				 */
+				try {
+					closeable.close();
+					if (log.isTraceEnabled()) {
+						log.trace("Task " + taskName + ". Attached closeable object is closed.");
+					}
+					
+				} catch (Throwable th) {
+					if (log.isErrorEnabled()) {
+						log.error("Task " + taskName + ". Closing attached closeable object exception: ", th);
+					}
+				}
+			}
+			if (terminateThread) {
+				thread.interrupt();
+			}
+		}
+
+		@Override
+		protected void doCancel() {
+//			QuickStatsEngine2.engine.WATCHDOG_SUCCESSES.logEvent(taskName);
+			if (log.isDebugEnabled()) log.debug("Task " + taskName + " is completed successfully");
+		}
+		
+	}
+}

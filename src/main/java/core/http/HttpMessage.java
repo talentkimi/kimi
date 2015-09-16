@@ -1,0 +1,567 @@
+package core.http;
+
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.UnsupportedEncodingException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
+import core.io.StreamOutput;
+import core.io.StreamReader;
+import core.io.StreamWriter;
+import core.lang.Hex;
+import core.mime.MimeTypes;
+import core.text.Text;
+
+/**
+ * An HTTP Message.
+ */
+public abstract class HttpMessage implements Http, HttpMessageHeaderList, HttpVersionList, MimeTypes {
+
+	/** Indicates if this is in strict mode. */
+	private boolean strictMode = true;
+	/** The first title. * */
+	private HttpTitle title1 = newHttpTitle1();
+	/** The second title. * */
+	private HttpTitle title2 = newHttpTitle2();
+	/** The third title. * */
+	private HttpTitle title3 = newHttpTitle3();
+	private static final Logger log = LoggerFactory.getLogger(HttpMessage.class);
+
+	private Boolean isMultibyteWrite = null;
+
+	public void setStrictMode(boolean strict) {
+		this.strictMode = strict;
+	}
+
+	/**
+	 * Returns the first title.
+	 * @return the first title.
+	 */
+	protected final HttpTitle getTitle1() {
+		return title1;
+	}
+
+	/**
+	 * Returns the second title.
+	 * @return the second title.
+	 */
+	protected final HttpTitle getTitle2() {
+		return title2;
+	}
+
+	/**
+	 * Returns the third title.
+	 * @return the third title.
+	 */
+	protected final HttpTitle getTitle3() {
+		return title3;
+	}
+
+	/**
+	 * Returns the number of bytes.
+	 * @return the number of bytes.
+	 */
+	public final long bytes() {
+		long bytes = 0;
+		bytes += getTitle1().toString().length();
+		bytes += 1;
+		bytes += getTitle2().toString().length();
+		bytes += 1;
+		bytes += getTitle3().toString().length();
+		bytes += 2;
+		for (int i = 0; i < getHeaderList().size(); i++) {
+			HttpHeader header = getHeaderList().getHeader(i);
+			bytes += header.getName().length();
+			bytes += 2;
+			bytes += header.getValue().length();
+			bytes += 2;
+		}
+		bytes += 2;
+		bytes += getContent().length();
+		return bytes;
+	}
+
+	protected void initialiseMultibyteWrite() {
+//		if (TripPlanner.getTripPlanner().getSystemVariableManager() != null) {
+//			isMultibyteWrite = TripPlanner.getTripPlanner().getSystemVariableManager().getVariableAsBoolean(StreamOutput.IS_MULTIBYTE_WRITE_SYSVAR_NAME);
+//		}
+	}
+
+	/**
+	 * Returns a new first title.
+	 * @return a new first title.
+	 */
+	protected abstract HttpTitle newHttpTitle1();
+
+	/**
+	 * Returns a new second title.
+	 * @return a new second title.
+	 */
+	protected abstract HttpTitle newHttpTitle2();
+
+	/**
+	 * Returns a new third title.
+	 * @return a new third title.
+	 */
+	protected abstract HttpTitle newHttpTitle3();
+
+	/** The list of headers.* */
+	private HttpHeaderList headerList = new HttpHeaderList();
+
+	/**
+	 * Returns the header list.
+	 * @return the header list.
+	 */
+	public final HttpHeaderList getHeaderList() {
+		return headerList;
+	}
+
+	/**
+	 * Convenience method for adding headers.
+	 * @param name the header name.
+	 * @param value the header value.
+	 */
+	public final void addHeader(String name, Object value) {
+		HttpHeader header = new HttpHeader(name, value);
+		getHeaderList().add(header);
+	}
+
+	/** The content. * */
+	private HttpContent content = new HttpContent();
+
+	/**
+	 * Returns the content.
+	 * @return the content.
+	 */
+	public final HttpContent getContent() {
+		return content;
+	}
+
+	/**
+	 * Convenience method to set the content of the message including headers.
+	 * @param content the content.
+	 * @param type the content type.
+	 */
+	public final void setContent(byte[] content, String type) {
+		setContent(content, type, null);
+	}
+
+	/**
+	 * Convenience method to clear the content of the message.
+	 */
+	public final void clearContent() {
+		getContent().clear();
+		getHeaderList().removeHeader(HEADER_CONTENT_TYPE);
+		getHeaderList().removeHeader(HEADER_CONTENT_LENGTH);
+	}
+
+	/**
+	 * Convenience method to set the content of the message including headers.
+	 * @param content the content.
+	 * @param type the content type.
+	 */
+	public final void setContent(byte[] content, String type, String encoding) {
+		if (type == null) {
+			throw new NullPointerException();
+		}
+		if (content == null) {
+			content = getContent().toByteArray();
+		}
+		if (content.length > 0) {
+
+			// Content Type
+			HttpHeader contentType = new HttpHeader(HEADER_CONTENT_TYPE, type.toString());
+
+			// Content Length
+			HttpHeader contentLength = new HttpHeader(HEADER_CONTENT_LENGTH, String.valueOf(content.length));
+
+			// Set Headers
+			getHeaderList().set(contentType);
+			getHeaderList().set(contentLength);
+			if (encoding != null) {
+				getContent().setCharset(encoding);
+			}
+			getContent().set(content);
+
+		} else {
+
+			// Remove
+			getHeaderList().removeHeader(HEADER_CONTENT_TYPE);
+			getHeaderList().removeHeader(HEADER_CONTENT_LENGTH);
+		}
+	}
+
+	/**
+	 * Convenience method to set the content of the message including headers.
+	 * @param content the content.
+	 * @param type the content type.
+	 */
+	public final void setContent(String content, String type, String encoding) throws UnsupportedEncodingException {
+		setContent(content.getBytes(encoding), type, encoding);
+	}
+
+	/**
+	 * Convenience method to set the content of the message including headers.
+	 * @param content the content.
+	 * @param type the content type.
+	 */
+	public final void setContent(String content, String type) {
+		setContent(content.getBytes(), type, null);
+	}
+
+	/**
+	 * Convenience method to set the content of the message including headers.
+	 * @param type the content type.
+	 */
+	public final void setContent(String type) throws UnsupportedEncodingException {
+		setContent((byte[]) null, type, null);
+	}
+
+	/**
+	 * Returns a string representation of this message.
+	 * @param includeContent true to include the message content.
+	 */
+	public String toString(boolean includeContent) {
+		StringBuilder message = new StringBuilder();
+		message.append(toStringTitle());
+		message.append(toStringHeaders());
+		if (includeContent) {
+			message.append(getContent());
+		}
+		return message.toString();
+	}
+
+	/**
+	 * Returns the title as a string.
+	 * @return the title as a string.
+	 */
+	private String toStringTitle() {
+		StringBuilder title = new StringBuilder();
+		title.append(getTitle1());
+		title.append(SPACE);
+		title.append(getTitle2());
+		title.append(SPACE);
+		title.append(getTitle3());
+		title.append(NEW_LINE);
+		return title.toString();
+	}
+
+	/**
+	 * Returns the title as a string.
+	 * @return the title as a string.
+	 */
+	private String toStringHeaders() {
+		StringBuilder headers = new StringBuilder();
+		for (int i = 0; i < getHeaderList().size(); i++) {
+			HttpHeader header = getHeaderList().getHeader(i);
+			headers.append(header.getName());
+			headers.append(COLON);
+			headers.append(SPACE);
+			headers.append(header.getValue());
+			headers.append(NEW_LINE);
+		}
+		headers.append(NEW_LINE);
+		return headers.toString();
+	}
+
+	/**
+	 * Returns a string representation of this message.
+	 */
+	public String toString() {
+		return toString(true);
+	}
+
+	/**
+	 * Reads and returns the length of the content. Returns 0 if the length is unknown, but content is present. Returns -1 if there is no content.
+	 * @return the content length.
+	 */
+	protected int readFromContentLength() {
+		int contentLength = -1;
+		for (int i = 0; i < getHeaderList().size(); i++) {
+			HttpHeader header = getHeaderList().getHeader(i);
+			if (header.hasName(HEADER_CONTENT_LENGTH)) {
+				contentLength = Integer.parseInt(header.getValue());
+				if (contentLength > 0) {
+					return contentLength;
+				} else {
+					return -1;
+				}
+			}
+			if (contentLength == -1) {
+				if (Text.startsWithIgnoreCase(header.getName(), "Content")) {
+					contentLength = 0;
+				} else if (header.getName().equals(HEADER_TRANSFER_ENCODING)) {
+					contentLength = 0;
+				}
+			}
+		}
+		return contentLength;
+	}
+
+	/**
+	 * Read the title line from the given input.
+	 * @param in the input.
+	 * @throws IOException if an IO error occurs reading the title.
+	 */
+	private final void readFromTitle(StreamReader in) throws IOException {
+		String titleLine = in.readLine();
+		if (titleLine.length() == 0) {
+			throw new IOException("Empty HTTP message");
+		}
+		int indexSpace1 = titleLine.indexOf(SPACE);
+		if (indexSpace1 == -1) {
+			throw new IOException("Illegal HTTP title: \"" + titleLine + "\"");
+		}
+		int indexSpace2 = titleLine.indexOf(SPACE, indexSpace1 + 1);
+		// if( indexSpace2 == -1 ) throw new IOException( "Illegal HTTP title: \""+titleLine+"\"" );
+		if (indexSpace2 == -1) {
+			indexSpace2 = titleLine.length() - 1;
+		}
+		getTitle1().set(titleLine.substring(0, indexSpace1));
+		getTitle2().set(titleLine.substring(indexSpace1 + 1, indexSpace2));
+		getTitle3().set(titleLine.substring(indexSpace2 + 1, titleLine.length()));
+	}
+
+	/**
+	 * Read the headers from the given input.
+	 * @param in the input.
+	 * @throws IOException if an IO error occurs reading the title.
+	 */
+	private final void readFromHeaders(StreamReader in) throws IOException {
+		while (true) {
+			String headerLine = in.readLine();
+			if (headerLine.length() == 0) {
+				break;
+			}
+			int indexColon = headerLine.indexOf(COLON);
+			if (indexColon == -1) {
+				// getHeaderList().clear();
+				continue;
+				// throw new IOException("Illegal HTTP header: \"" + headerLine + "\"");
+			}
+			String name = headerLine.substring(0, indexColon).trim();
+			String value = headerLine.substring(indexColon + 1, headerLine.length()).trim();
+			HttpHeader header = new HttpHeader(name, value);
+			getHeaderList().add(header);
+		}
+	}
+
+	private static final void readChunkedEncoding(StreamReader in, ByteArrayOutputStream out) throws IOException {
+		while (true) {
+
+			// Read HEX data size
+			String line = in.readLine();
+			int index = 0;
+			for (int i = 0; i < line.length(); i++) {
+				char c = line.charAt(i);
+				if (!Hex.isHexDigit(c)) {
+					break;
+				}
+				index++;
+			}
+			int length = Integer.parseInt(line.substring(0, index), 16);
+			if (length == 0) {
+				break;
+			}
+
+			byte[] data = in.readToByteArray(length);
+			out.write(data, 0, length);
+			in.readLineBytes();
+		}
+	}
+
+	/**
+	 * Read the content from the given input.
+	 * @param in the input.
+	 * @throws IOException if an IO error occurs reading the title.
+	 */
+	protected void readFromContent(StreamReader in) throws IOException {
+		int contentLength = readFromContentLength();
+		if (contentLength >= 0) {
+			if (contentLength == 0) {
+
+				// HTTP 1.1 Chunked Transfer Encoding (only supports empty content)
+				for (int i = 0; i < getHeaderList().size(); i++) {
+					HttpHeader header = getHeaderList().getHeader(i);
+					if (header.getName().equals(HEADER_TRANSFER_ENCODING)) {
+						if (header.getValue().equalsIgnoreCase("chunked")) {
+							ByteArrayOutputStream out = new ByteArrayOutputStream();
+							readChunkedEncoding(in, out);
+							content.set(out.toByteArray());
+							return;
+						}
+					}
+				}
+
+				content.set(in.readToByteArray(strictMode));
+			} else {
+				content.set(in.readToByteArray(contentLength));
+			}
+		}
+	}
+
+	/**
+	 * Write the given headers to the output.
+	 * @param out the output.
+	 * @throws IOException if an IO error occures writing the headers.
+	 */
+	private final void writeToTitle(StreamWriter out) throws IOException {
+		out.write(toStringTitle());
+		out.flush();
+	}
+
+	/**
+	 * Write the given headers to the output.
+	 * @param out the output.
+	 * @throws IOException if an IO error occures writing the headers.
+	 */
+	private final void writeToHeaders(StreamWriter out) throws IOException {
+		out.write(toStringHeaders());
+		out.flush();
+	}
+
+	/**
+	 * Write the given headers to the output.
+	 * @param out the output.
+	 * @throws IOException if an IO error occures writing the headers.
+	 */
+	private final void writeToContent(StreamWriter out) throws IOException {
+		// Default behaviour should be multi-byte write
+		if (isMultibyteWrite == null || isMultibyteWrite.booleanValue()) {
+			// Call the BufferedOutpuStream write
+			out.write(getContent().toByteArray(), 0, getContent().length());
+		} else {
+			// Call the FilterOutpuStream write
+			out.write(getContent().toByteArray());
+		}
+		out.flush();
+	}
+
+	/**
+	 * Reads the contents of this message from the given input stream.
+	 * @param in the input stream.
+	 * @throws IOException if an IO error occurs reading this message.
+	 */
+	public final void readFrom(StreamReader in, String whoCallsMe) throws IOException {
+		readFrom(in, true, whoCallsMe);
+	}
+
+	/**
+	 * Reads the contents of this message from the given input stream.
+	 * @param in the input stream.
+	 * @throws IOException if an IO error occurs reading this message.
+	 */
+	public final void readFrom(StreamReader in, boolean content, String whoCallsMe) throws IOException {
+
+		try {
+
+		// Title & Headers
+		readFromTitle(in);
+		readFromHeaders(in);
+
+		// Content
+		if (content) {
+			readFromContent(in);
+		}
+
+		} catch (IOException ioe) {
+			if (ioe.getMessage().toLowerCase().contains("end of stream")) {
+//				QuickStatsEngine2.engine.STREAM_READING_ERRORS.logEvent(whoCallsMe);
+				if (log.isWarnEnabled()) log.warn("Stream Reading error at659||"+whoCallsMe+"||"+ioe.getMessage()+"||", ioe);
+			}
+			throw ioe;
+		}
+	}
+
+	/**
+	 * Writes the contents of this message to the given output stream.
+	 * @param out the output stream.
+	 * @throws IOException if an IO error occurs writing this message.
+	 */
+	public final void writeTo(StreamWriter out) throws IOException {
+		writeTo(out, true);
+	}
+
+	/**
+	 * Writes the contents of this message to the given output stream.
+	 * @param out the output stream.
+	 * @throws IOException if an IO error occurs writing this message.
+	 */
+	public final void writeTo(StreamWriter out, boolean content) throws IOException {
+		writeToTitle(out);
+		writeToHeaders(out);
+		if (content) {
+			writeToContent(out);
+		}
+	}
+
+	/**
+	 * Writes this message to a byte array.
+	 * @return the byte array.
+	 * @throws IOException if an IO error occurs writing this message.
+	 */
+	public final byte[] writeToByteArray() throws IOException {
+		ByteArrayOutputStream stream = new ByteArrayOutputStream();
+		StreamWriter writer = new StreamWriter(stream);
+		writeTo(writer);
+		return stream.toByteArray();
+	}
+
+	/**
+	 * Writes this message to a string.
+	 * @return the string.
+	 * @throws IOException if an IO error occurs writing this message.
+	 */
+	public final String writeToString() throws IOException {
+		byte[] bytes = writeToByteArray();
+		return new String(bytes);
+	}
+
+	/**
+	 * Read the contents of this message from the input then write to the output.
+	 * @param in the input.
+	 * @param out the output.
+	 */
+	public final void readFromWriteTo(StreamReader in, StreamWriter out) throws IOException {
+
+		// Title
+		readFromTitle(in);
+		writeToTitle(out);
+
+		// Headers
+		readFromHeaders(in);
+		writeToHeaders(out);
+
+		// Content
+		readFromContent(in);
+		writeToContent(out);
+	}
+
+	/**
+	 * Convenience method for setting headers.
+	 * @param name the header name.
+	 * @param value the header value.
+	 */
+	public final void setHeader(String name, Object value) {
+		HttpHeader header = new HttpHeader(name, value);
+		getHeaderList().set(header);
+	}
+
+	/**
+	 * Close this message.
+	 */
+	public void close() {
+		this.title1 = null;
+		this.title2 = null;
+		this.title3 = null;
+		if (headerList != null) {
+			headerList.clear();
+		}
+		this.headerList = null;
+		this.content = null;
+	}
+
+}

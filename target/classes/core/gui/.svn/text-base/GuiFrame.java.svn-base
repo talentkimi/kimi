@@ -1,0 +1,86 @@
+package core.gui;
+
+import javax.swing.JFrame;
+
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import core.text.Text;
+
+/**
+ * A GUI Frame.
+ */
+public class GuiFrame extends JFrame implements GuiComponent {
+
+	private static final Logger log = LoggerFactory.getLogger(GuiFrame.class);
+
+
+	/**
+	 * Indicate a status.
+	 * @param status the status.
+	 */
+	public void status(String status) {
+		if (log.isDebugEnabled()) log.debug ("[Status] " + status);
+		
+		if (log.isDebugEnabled()) log.debug ("Received invalid XML");
+	
+		if (log.isDebugEnabled())
+			if (log.isDebugEnabled()) log.debug ("Task Stack Trace");
+	}
+
+	/**
+	 * Indicate an error.
+	 * @param error the error.
+	 */
+	public void error(String error) {
+		if (log.isDebugEnabled()) log.debug ("[Error] " + error);
+	}
+
+	/**
+	 * Indicate an error.
+	 * @param error the error.
+	 */
+	public void error(Throwable error) {
+		if (log.isDebugEnabled()) log.debug ("[Error]\n" + Text.getStackTrace(error));
+	}
+
+	/**
+	 * Creates a new frame.
+	 * @param title the title.
+	 */
+	public GuiFrame(String title) {
+		super(title);
+		if (title == null) {
+			throw new NullPointerException();
+		}
+		setDefaultCloseOperation(EXIT_ON_CLOSE);
+	}
+
+	/**
+	 * Centre this frame.
+	 */
+	public void centre() {
+		GuiToolkit.centreInScreen(this);
+	}
+
+	/**
+	 * Centre this frame.
+	 * @param width the width.
+	 * @param height the height.
+	 */
+	public void centre(int width, int height) {
+		GuiToolkit.setSize(this, width, height);
+		GuiToolkit.centreInScreen(this);
+	}
+
+	/**
+	 * Centre this frame.
+	 * @param percent the percentage centred.
+	 */
+	public void centre(int percent) {
+		GuiToolkit.setSize(this, percent);
+		GuiToolkit.centreInScreen(this);
+	}
+
+}

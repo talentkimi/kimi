@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 65
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/log4j
+END
+Log4jLogRecord.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/log4j/Log4jLogRecord.java
+END
+TpAppender.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/log4j/TpAppender.java
+END
+Log4jTimeLogIndexEntry.java
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/log4j/Log4jTimeLogIndexEntry.java
+END

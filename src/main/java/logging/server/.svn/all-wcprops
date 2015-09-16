@@ -1,0 +1,107 @@
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/server
+END
+CmdRequestGetExistsLoggers.java
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/server/CmdRequestGetExistsLoggers.java
+END
+CmdRequestFindRecords.java
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/server/CmdRequestFindRecords.java
+END
+LoggingServerReader.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/server/LoggingServerReader.java
+END
+CmdResponseLoggersList.java
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/server/CmdResponseLoggersList.java
+END
+CmdRequestRebuildIndexes.java
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/server/CmdRequestRebuildIndexes.java
+END
+AbstractCmdResponse.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/server/AbstractCmdResponse.java
+END
+CmdRequestShutdown.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/server/CmdRequestShutdown.java
+END
+LoggingServerWriter.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/server/LoggingServerWriter.java
+END
+CmdResponseOk.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/server/CmdResponseOk.java
+END
+CmdRequest.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/server/CmdRequest.java
+END
+LoggingServer.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/server/LoggingServer.java
+END
+CmdResponseRecordList.java
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/server/CmdResponseRecordList.java
+END
+CmdResponse.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/server/CmdResponse.java
+END
+CmdRequestLogMessage.java
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/server/CmdRequestLogMessage.java
+END
+LoggingClient.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/server/LoggingClient.java
+END
+CmdResponseFailure.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/server/CmdResponseFailure.java
+END
+CmdRequestDeleteOld.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/server/CmdRequestDeleteOld.java
+END

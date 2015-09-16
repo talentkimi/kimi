@@ -1,0 +1,95 @@
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/xml
+END
+XmlFile.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/xml/XmlFile.java
+END
+Xml.java
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/xml/Xml.java
+END
+XmlContainer.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/xml/XmlContainer.java
+END
+XmlNode.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/xml/XmlNode.java
+END
+XmlFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/xml/XmlFilter.java
+END
+XmlDeclaration.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/xml/XmlDeclaration.java
+END
+XmlException.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/xml/XmlException.java
+END
+XmlReader.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/xml/XmlReader.java
+END
+XmlComment.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/xml/XmlComment.java
+END
+XmlAttribute.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/xml/XmlAttribute.java
+END
+XmlObject.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/xml/XmlObject.java
+END
+XmlList.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/xml/XmlList.java
+END
+XmlCdata.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/xml/XmlCdata.java
+END
+XmlWriter.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/xml/XmlWriter.java
+END
+XmlConstants.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/xml/XmlConstants.java
+END

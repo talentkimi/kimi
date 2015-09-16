@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/xml/sax
+END
+XmlDefaultHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/xml/sax/XmlDefaultHandler.java
+END
+SaxParser.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/xml/sax/SaxParser.java
+END
+StringDefaultHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/xml/sax/StringDefaultHandler.java
+END
+XmlSaxParser.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/xml/sax/XmlSaxParser.java
+END

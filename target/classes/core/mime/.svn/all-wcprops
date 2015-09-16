@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/mime
+END
+MimeAttachment.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/mime/MimeAttachment.java
+END
+SmtpClient.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/mime/SmtpClient.java
+END
+Base64Encoder.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/mime/Base64Encoder.java
+END
+InvalidAddressException.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/mime/InvalidAddressException.java
+END
+MimeMessage.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/mime/MimeMessage.java
+END
+MimeTypes.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/mime/MimeTypes.java
+END

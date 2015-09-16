@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/52994/branches/prod_5.20/c5/java/code/core/nioservice
+END
+NioHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/nioservice/NioHandler.java
+END
+NioClient.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/nioservice/NioClient.java
+END
+NioService.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/!svn/ver/52994/branches/prod_5.20/c5/java/code/core/nioservice/NioService.java
+END
+HandlerFutureTask.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/nioservice/HandlerFutureTask.java
+END
+NioServer.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/nioservice/NioServer.java
+END
+HttpHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/nioservice/HttpHandler.java
+END
+ChangeRequest.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/nioservice/ChangeRequest.java
+END
+NioHandlerManager.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/nioservice/NioHandlerManager.java
+END

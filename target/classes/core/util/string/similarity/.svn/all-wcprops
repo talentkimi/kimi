@@ -1,0 +1,35 @@
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/string/similarity
+END
+Tokeniser.java
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/string/similarity/Tokeniser.java
+END
+Similarity.java
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/string/similarity/Similarity.java
+END
+BipartiteMatcher.java
+K 25
+svn:wc:ra_dav:version-url
+V 101
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/string/similarity/BipartiteMatcher.java
+END
+Leven.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/string/similarity/Leven.java
+END
+MatchMaker.java
+K 25
+svn:wc:ra_dav:version-url
+V 95
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/util/string/similarity/MatchMaker.java
+END

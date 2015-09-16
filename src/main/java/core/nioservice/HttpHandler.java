@@ -1,0 +1,141 @@
+package core.nioservice;
+
+import java.io.IOException;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.SocketChannel;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+
+import core.nioservice.http.HttpMessage;
+import core.nioservice.http.HttpMsgParseException;
+import core.text.Charsets;
+
+public abstract class HttpHandler implements NioHandler {
+
+	private static final Logger log = LoggerFactory.getLogger(HttpHandler.class);
+
+	protected NioService service;
+	protected SocketChannel channel;
+	protected HttpMessage httpMessage;
+	protected Exception exception;
+
+	public HttpHandler(NioService service, SocketChannel channel, HttpMessage httpMessage) {
+		this.service = service;
+		this.channel = channel;
+		this.httpMessage = httpMessage;
+		this.exception = null;
+	}
+
+	public SocketChannel getSendChannel() {
+		return channel;
+	}
+
+	public HttpMessage getMessage() {
+		return httpMessage;
+	}
+
+	@Override
+	public Exception getException() {
+		return this.exception;
+	}
+
+	@Override
+	public void setException(Exception e) {
+		this.exception = e;
+	}
+
+	@Override
+	public void processData(byte[] data, int count) {
+		this.httpMessage.get().write(data, 0, count);
+	}
+
+	@Override
+	public void run() {
+		try {
+			if (this.exception == null) {
+				try {
+					this.httpMessage.parse();
+				} catch (HttpMsgParseException e) {
+					this.exception = e;
+					handleMsgParseException();
+					return;
+				}
+			} else {
+				handleException();
+				return;
+			}
+			// message read complete
+			if (this.httpMessage.isComplete()) {
+				try {
+					handleHttpMessage();
+				} catch (Exception e) {
+					this.exception = e;
+					handleException();
+				} finally {
+					doCleanup();
+				}
+				return;
+			}
+
+			// At this point, the message is not complete; we need to read more...
+			getService().changeOpsRequest(channel, ChangeRequest.CHANGEOPS, SelectionKey.OP_READ);
+
+		} catch (Throwable t) {
+			if (log.isErrorEnabled()) {
+				log.error("THROWABLE IN NIO HTTP HANDLER: " + t.getMessage(), t);
+			}
+//			QuickStatsEngine2.engine.MISC_ERRORS.logEvent(this.getClass().getSimpleName() + " " + t.getClass().getSimpleName() + " " + t.getMessage());
+		}
+	}
+
+	protected abstract void doCleanup();
+
+	@Override
+	public void send() {
+		((NioServer) this.service).send(getSendChannel(), this.httpMessage.toByteArray());
+	}
+
+	protected void handleMsgParseException() {
+		this.httpMessage.reset();
+		try {
+			this.httpMessage.get().write("HTTP/1.0 400 Bad Request\r\n\r\n".getBytes(Charsets.SYSTEM));
+			send();
+			this.httpMessage.close();
+		} catch (IOException e) {
+			if (log.isErrorEnabled()) {
+				log.error("EXCEPTION IN NIO HTTP HANDLER: " + e.getMessage(), e);
+			}
+//			QuickStatsEngine2.engine.MISC_ERRORS.logEvent(this.getClass().getSimpleName() + " " + e.getClass().getSimpleName() + " " + e.getMessage());
+		}
+	}
+
+	protected abstract void handleHttpMessage() throws Exception;
+	protected abstract void handleException();
+	protected abstract NioService getService();
+
+	@Override
+	public void connectionEstablished() {
+		// Do nothing
+	}
+
+	@Override
+	public void writeFinished() {
+		// Do nothing
+	}
+
+	@Override
+	public void terminate() {
+		try {
+			if (channel != null) {
+				channel.close();
+			}
+			httpMessage.close();
+		} catch (IOException e) {
+			if (log.isErrorEnabled()) {
+				log.error("ERROR TERMINATING HANDLER " + getService().getServiceName(), e);
+			}
+		}
+	}
+}

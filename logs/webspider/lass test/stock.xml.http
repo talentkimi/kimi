@@ -1,0 +1,11 @@
+HTTP/1.1 200 OK
+Connection: close
+Date: Thu, 28 May 2015 06:38:09 GMT
+Server: Microsoft-IIS/6.0
+X-Powered-By: ASP.NET
+X-AspNet-Version: 2.0.50727
+Cache-Control: private, max-age=0
+Content-Type: text/xml; charset=utf-8
+Content-Length: 723
+
+<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><getStockInfoByCodeResponse xmlns="http://WebXml.com.cn/"><getStockInfoByCodeResult><string>sh603997</string><string>提示信息：已关闭数据服务。</string><string>2015-05-28 14:38:09</string><string /><string /><string /><string /><string /><string /><string /><string /><string /><string /><string /><string /><string /><string /><string /><string /><string /><string /><string /><string /><string /><string /></getStockInfoByCodeResult></getStockInfoByCodeResponse></soap:Body></soap:Envelope>

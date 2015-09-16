@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions name="RetrievePropertyClassificationversion2_DEF" targetNamespace="http://www.aaancnuit.com.AAANCNU_WSDL_RetrievePropertyClassification_version2" xmlns:AAANCNU_WSDL_RetrievePropertyClassification_version2="http://www.aaancnuit.com.AAANCNU_WSDL_RetrievePropertyClassification_version2"
+	xmlns:AAANCNU_RetrievePropertyClassification_version2="http://www.aaancnuit.com.AAANCNU_RetrievePropertyClassification_version2"
+	xmlns:AAANCNU_Common_version2="http://www.aaancnuit.com.AAANCNU_Common_version2"
+	xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns="http://schemas.xmlsoap.org/wsdl/">
+
+
+	<types>
+		<xsd:schema targetNamespace="http://www.aaancnuit.com.AAANCNU_WSDL_RetrievePropertyClassification_version2">
+			<xsd:import namespace="http://www.aaancnuit.com.AAANCNU_RetrievePropertyClassification_version2" schemaLocation="RetrievePropertyClassification_version2.xsd"/>
+			<xsd:import namespace="http://www.aaancnuit.com.AAANCNU_Common_version2" schemaLocation="Common_version2.xsd"/>
+	<!-- TYPE REQUIRED FOR A PARAMETER -->
+			<xsd:complexType name="retrievePropertyClassificationRequest">
+				<xsd:sequence minOccurs="1" maxOccurs="1">
+					<xsd:element name="applicationContext" type="AAANCNU_Common_version2:ApplicationContext" minOccurs="0" maxOccurs="1"/>
+					<xsd:element name="propertyInfo" type="AAANCNU_RetrievePropertyClassification_version2:PropertyClassificationRequest" minOccurs="0" maxOccurs="1"/>
+					<xsd:element name="messageExtension" type="xsd:anyType" minOccurs="0"  maxOccurs="unbounded" />
+				</xsd:sequence>
+			</xsd:complexType>
+			<xsd:element name="retrievePropertyClassificationRequest" type="AAANCNU_WSDL_RetrievePropertyClassification_version2:retrievePropertyClassificationRequest"/>
+
+	<!-- TYPE REQUIRED FOR A PARAMETER -->
+			<xsd:complexType name="retrievePropertyClassificationResponse">
+				<xsd:sequence minOccurs="1" maxOccurs="1">
+					<xsd:element name="applicationContext" type="AAANCNU_Common_version2:ApplicationContext" minOccurs="0" maxOccurs="1"/>
+					<xsd:element name="report" type="AAANCNU_RetrievePropertyClassification_version2:PropertyClassificationReport" minOccurs="0" maxOccurs="1"/>
+					<xsd:element name="messageExtension" type="xsd:anyType" minOccurs="0"  maxOccurs="unbounded" />
+				</xsd:sequence>
+			</xsd:complexType>
+			<xsd:element name="retrievePropertyClassificationResponse" type="AAANCNU_WSDL_RetrievePropertyClassification_version2:retrievePropertyClassificationResponse"/>
+
+		</xsd:schema>
+
+	</types>
+
+	<!-- MESSAGE BLOCKS -->
+	<message name="retrievePropertyClassificationRequest">
+		<part name="retrievePropertyClassification" element="AAANCNU_WSDL_RetrievePropertyClassification_version2:retrievePropertyClassificationRequest"/>
+	</message>
+	<message name="retrievePropertyClassificationResponse">
+		<part name="retrievePropertyClassification" element="AAANCNU_WSDL_RetrievePropertyClassification_version2:retrievePropertyClassificationResponse"/>
+	</message>
+
+	<message name="ErrorInfo">
+		<part name="errorInfo" element="AAANCNU_Common_version2:ErrorInfo"/>
+	</message>
+	<!-- end of MESSAGE BLOCKS -->
+
+	<!-- PORT TYPES -->
+	<portType name="RetrievePropertyClassification">
+		<operation name="RetrievePropertyClassification">
+		<documentation>&lt;p&gt;&lt;/p&gt;</documentation>
+			<input message="AAANCNU_WSDL_RetrievePropertyClassification_version2:retrievePropertyClassificationRequest"/>
+			<output message="AAANCNU_WSDL_RetrievePropertyClassification_version2:retrievePropertyClassificationResponse"/>
+			<fault name="ErrorResponseType" message="AAANCNU_WSDL_RetrievePropertyClassification_version2:ErrorInfo"/>
+		</operation>
+	</portType>
+
+	<!-- end of PORT TYPES -->
+
+	<!-- BINDINGS -->
+	<binding name="RetrievePropertyClassificationSOAPBinding" type="AAANCNU_WSDL_RetrievePropertyClassification_version2:RetrievePropertyClassification">
+		<soap:binding transport="http://schemas.xmlsoap.org/soap/http" style="document"/>
+			<operation name="RetrievePropertyClassification">
+			<soap:operation soapAction="http://www.aaancnuit.com.retrievePropertyClassification"/>
+			<input>
+				<soap:body use="literal"/>
+			</input>
+			<output>
+				<soap:body use="literal"/>
+			</output>
+			<fault name="ErrorResponseType">
+				<soap:fault name="ErrorResponseType" use="literal"/>
+			</fault>
+			</operation>
+	</binding>
+
+	<!-- end of BINDINGS -->
+
+	<!-- SERVICE BLOCKS -->
+	<service name="RetrievePropertyClassificationService">
+		<port name="RetrievePropertyClassificationSOAPPort" binding="AAANCNU_WSDL_RetrievePropertyClassification_version2:RetrievePropertyClassificationSOAPBinding">
+			<soap:address location="http://www.aaancnuit.com.services/imaidm/RetrievePropertyClassification.asmx"/>
+		</port>
+	</service>
+	<!-- end of SERVICE BLOCKS -->
+
+</definitions>

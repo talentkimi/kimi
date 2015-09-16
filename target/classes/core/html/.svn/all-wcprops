@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/html
+END
+HtmlException.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/html/HtmlException.java
+END
+HtmlFormList.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/html/HtmlFormList.java
+END
+HtmlFormWriter.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/html/HtmlFormWriter.java
+END
+HtmlUrlReplacer.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/html/HtmlUrlReplacer.java
+END
+HtmlField.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/html/HtmlField.java
+END
+HtmlForm.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/html/HtmlForm.java
+END
+HtmlDecoder.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/html/HtmlDecoder.java
+END
+HtmlFormReader.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/html/HtmlFormReader.java
+END

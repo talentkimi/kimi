@@ -1,0 +1,12 @@
+HTTP/1.1 200 OK
+Cache-Control: private, max-age=0
+Content-Type: text/xml; charset=utf-8
+Server: Microsoft-IIS/7.0
+X-AspNet-Version: 4.0.30319
+Set-Cookie: cbFailInfo=%0d%0aMust submit a session identifier%0d%0aWrong user name/Password.; path=/
+X-Powered-By: ASP.NET
+Date: Sat, 29 Dec 2012 15:10:21 GMT
+Connection: close
+Content-Length: 303
+
+<?xml version="1.0" encoding="utf-8"?><soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema"><soap:Body><LoginOnlineResponse xmlns="http://api.citybreak.com/" /></soap:Body></soap:Envelope>

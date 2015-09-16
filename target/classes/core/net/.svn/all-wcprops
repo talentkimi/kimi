@@ -1,0 +1,83 @@
+K 25
+svn:wc:ra_dav:version-url
+V 60
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/net
+END
+NetSocket.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/net/NetSocket.java
+END
+NetOutputFlusher.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/net/NetOutputFlusher.java
+END
+NetPortListener.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/net/NetPortListener.java
+END
+NetTrustManager.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/net/NetTrustManager.java
+END
+HttpsProtocol.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/net/HttpsProtocol.java
+END
+NetSocketPipeThread.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/net/NetSocketPipeThread.java
+END
+NetHostResolver.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/net/NetHostResolver.java
+END
+NetServerSocket.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/net/NetServerSocket.java
+END
+NetHostResolverTask.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/net/NetHostResolverTask.java
+END
+NetUrl.java
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/net/NetUrl.java
+END
+NetSocketHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/net/NetSocketHandler.java
+END
+NetSocketPipe.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/net/NetSocketPipe.java
+END
+IpAddress.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/net/IpAddress.java
+END

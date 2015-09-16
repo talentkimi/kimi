@@ -1,0 +1,110 @@
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//
+//      FILE NAME       :       BookingChangeLinkData.java
+//      DATE            :       28 May 2009
+//      AUTHOR          :       Rob O'Brien
+//      REFERENCE       :       
+//
+//      DESCRIPTION     :       Wrapper for a row from the BookingChangeLink table used to store corresponding TF references from a 
+//                              booking change request.
+//
+//
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+//      CHANGE HISTORY
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// DATE     | NAME               | DESCRIPTION                                                                 | REFERENCE
+//----------+--------------------+-----------------------------------------------------------------------------+--------------------
+// dd/mm/yy |                    |                                                                             |                      
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+package core.commondata;
+
+import core.util.UtilDate;
+import core.xml.Xml;
+import core.xml.XmlNode;
+import engine.booking.confirmation.TFBookingReference;
+
+/**
+ * Wrapper for a row from the BookingChangeLink table used to store corresponding TF references from a booking change request.
+ */
+public class BookingChangeLinkData {
+
+    /** The TF reference of the booking. */
+    private TFBookingReference i_currentTFReference;
+
+    /** The TF reference of the parent booking. */
+    private TFBookingReference i_parentTFReference;
+
+    /** The TF reference of the new (changed) booking. */
+    private TFBookingReference i_childTFReference;
+
+    /** The type of booking change. */
+    private String i_changeType;
+
+    /** The branch id performing the booking change. */
+    private String i_branchId;
+
+    /** The date the booking change was performed.. */
+    private long i_genDate;
+
+    /**
+     * Constucts an object that conatins all of the booking change link data for a given TF reference.
+     * The link data is used to associate changed bookings with there original booking and vice versa.
+     * @param parentTFReference 
+     * @param childTFReference
+     * @param changeType
+     * @param branchId
+     * @param genDate
+     */
+    public BookingChangeLinkData(String currentTFReference,
+                                 String parentTFReference,
+                                 String childTFReference,
+                                 String changeType,
+                                 String branchId,
+                                 Long genDate)
+    {
+        i_currentTFReference = new TFBookingReference(currentTFReference);
+        i_parentTFReference = new TFBookingReference(parentTFReference);
+        i_childTFReference = new TFBookingReference(childTFReference);
+        i_changeType = changeType;
+        i_branchId = branchId;
+        i_genDate = genDate;
+    }
+    
+    /**
+     * Retrieves the TF reference for the parent of the current booking.
+     * @return A <code>TFBookingReference</code>.
+     */
+    public TFBookingReference getParentTfReference()
+    {
+        return i_parentTFReference;
+    }
+    
+    /**
+     * Retrieves the TF reference for the child of the current booking.
+     * @return A <code>TFBookingReference</code>.
+     */
+    public TFBookingReference getChildTfReference()
+    {
+        return i_childTFReference;
+    }
+    
+    /**
+     * Renders the <code>BookingChangeLinkData</code> object as <code>Xml</code>.
+     * @return An <code>Xml</code> object containing the <code>BookingChangeLinkData</code>.
+     */
+    public Xml toXml()
+    {
+        XmlNode xml = new XmlNode("BookingChangeLinkInfo");
+        
+        String changeDate = (i_genDate > 0) ? new UtilDate(i_genDate, UtilDate.FORMAT_PATTERN_SECONDS).toString() : "";
+        
+        xml.newChild("ParentTFBookingReference", i_parentTFReference);
+        xml.newChild("ChildTFBookingReference", i_childTFReference);
+        xml.newChild("ChangeType", i_changeType);
+        xml.newChild("BranchId", i_branchId);
+        xml.newChild("BookingChangeDate", changeDate);
+        
+        return xml;
+    }
+    
+}

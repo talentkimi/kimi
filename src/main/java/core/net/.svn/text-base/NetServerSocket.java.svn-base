@@ -1,0 +1,284 @@
+package core.net;
+
+import java.io.IOException;
+import java.net.BindException;
+import java.net.InetAddress;
+import java.net.ServerSocket;
+import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import javax.net.ServerSocketFactory;
+
+import model.balanceServer.BalanceServerConfig;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import project.tripplanner.TripPlanner;
+import project.tripplanner.server.TpBalanceServerXmlConfig;
+import project.tripplanner.server.TripPlannerServerConfig;
+import project.tripplanner.server.loadbalance.TpLoadBalanceServer;
+import project.tripplanner.tools.connectionmonitor.ConnectionMonitor;
+import project.tripplanner.tools.connectionmonitor.ConnectionRecord;
+import project.tripplanner.tools.stats.QuickStats2.QuickStatsEngine2;
+import core.lang.thread.ThreadManager;
+import core.text.Charsets;
+import core.util.Task;
+
+/**
+ * A Network Server Socket.
+ */
+public abstract class NetServerSocket extends Task {
+
+	private static final Logger log = LoggerFactory.getLogger(NetServerSocket.class);
+
+
+	/** The port that was used for listening on. */
+	public static int portUsed;
+	/** The server socket. */
+	private ServerSocket serverSocket;
+	/** The time the server was started. */
+	private long timeStarted = -1;
+	/** The total connections. */
+	private int totalConnections = 0;
+	/** The current connections. */
+	private AtomicInteger currentConnections = new AtomicInteger(0);
+	/** Indicates if the socket should shutdown. */
+	private boolean shutdown = false;
+
+	/**
+	 * Returns the server socket.
+	 */
+	public final ServerSocket getServerSocket() {
+		return serverSocket;
+	}
+
+	/**
+	 * Returns the time (in milliseconds) the server was started.
+	 * @return the time the server was started.
+	 */
+	public final long getTimeStarted() {
+		return timeStarted;
+	}
+
+	/**
+	 * Returns the total connections.
+	 * @return the total connections.
+	 */
+	public final int getTotalConnections() {
+		return totalConnections;
+	}
+
+	/**
+	 * Returns the current connections.
+	 * @return the current connections.
+	 */
+	public final int getCurrentConnections() {
+		return currentConnections.get();
+	}
+
+	/**
+	 * Returns the reading and writing charset.
+	 * @return the reading and writing charset.
+	 */
+	public String getCharset() {
+		return Charsets.UTF_8;
+	}
+
+	/**
+	 * Returns the local port.
+	 * @return the local port.
+	 */
+	public int getLocalPort() {
+		return getServerSocket().getLocalPort();
+	}
+
+	/**
+	 * Creates a new server socket listening on the given port.
+	 * @param port the port the server is listening on.
+	 * @param connections the number of connections in parallel.
+	 * @param socketFactory the socket factory to use.
+	 * @throws IOException it an IO error occurs creating a socket on the port.
+	 */
+	public NetServerSocket(int port, int connections, ServerSocketFactory socketFactory) throws IOException {
+		this(port, port, connections, socketFactory);
+	}
+
+	private InetAddress getIncomingAddress() throws UnknownHostException {
+		InetAddress incomingAddress = null;
+		String ipAddressString = TripPlannerServerConfig.getServerListenIp();
+
+		if (ipAddressString != null && !ipAddressString.equals("")) {
+			IpAddress ipAddress = new IpAddress(ipAddressString);
+			byte[] rawIpAddress = new byte[4];
+			rawIpAddress[0] = (byte) ipAddress.getPart1();
+			rawIpAddress[1] = (byte) ipAddress.getPart2();
+			rawIpAddress[2] = (byte) ipAddress.getPart3();
+			rawIpAddress[3] = (byte) ipAddress.getPart4();
+			incomingAddress = InetAddress.getByAddress(rawIpAddress);
+		}
+		return incomingAddress;
+	}
+
+	public NetServerSocket(int port, int secondPort, int connections, ServerSocketFactory socketFactory) throws IOException {
+		if (port < 1) {
+			throw new IllegalArgumentException("port=" + port);
+		}
+		if (secondPort < 1) {
+			throw new IllegalArgumentException("secondPort=" + secondPort);
+		}
+		if (connections < 0) {
+			throw new IllegalArgumentException("connections=" + connections);
+		}
+
+		// Server Socket
+		try {
+			if (socketFactory == null) {
+				socketFactory = ServerSocketFactory.getDefault();
+			}
+			InetAddress incomingAddress = getIncomingAddress();
+			if (incomingAddress != null)
+				serverSocket = socketFactory.createServerSocket(port, connections, incomingAddress);
+			else
+				serverSocket = socketFactory.createServerSocket(port);
+			if (log.isDebugEnabled()) log.debug ("Server started on first port: " + port + " listenning on " + serverSocket.getLocalSocketAddress());
+			portUsed = 1;
+		} catch (BindException be) {
+			if (secondPort != port) {
+				try {
+					if (socketFactory == null) {
+						socketFactory = ServerSocketFactory.getDefault();
+					}
+					serverSocket = socketFactory.createServerSocket(secondPort);
+					if (log.isDebugEnabled()) log.debug ("Server started on second port: " + secondPort);
+					portUsed = 2;
+				} catch (BindException be2) {
+					throw new BindException("Port and second port already in use: " + port + ", " + secondPort);
+				}
+			} else {
+				throw new BindException("Port already in use: " + port);
+			}
+		}
+	}
+
+	/**
+	 * Creates a new server socket listening on the given port.
+	 * @param port the port the server is listening on.
+	 * @param connections the number of connections in parallel.
+	 * @throws IOException it an IO error occurs creating a socket on the port.
+	 */
+	public NetServerSocket(int port, int connections) throws IOException {
+		this(port, connections, null);
+	}
+
+	public NetServerSocket(int port, int secondPort, int connections) throws IOException {
+		this(port, secondPort, connections, null);
+	}
+
+	/**
+	 * Returns a new handler.
+	 * @return a new handler.
+	 */
+	protected abstract NetSocketHandler newHandler();
+
+	/**
+	 * Runs this server socket.
+	 * @throws Throwable 
+	 */
+	public void runTask() throws Throwable {
+		this.timeStarted = System.currentTimeMillis();
+		try {
+			while (!shutdown) {
+				try {
+//					QuickStatsEngine2.engine.THREAD_COUNT.logEvent(rootThreadGroup.activeCount());
+					Socket theSocket = serverSocket.accept();					
+					ConnectionRecord connectionRecord = ConnectionMonitor.reportIncomingSocketConnection();
+					try {
+						NetSocket socket = new NetSocket(theSocket);
+						if (balanceServerNeededButNotActive(socket)) continue;
+						if (log.isDebugEnabled()) log.debug ("New Incoming Socket Connection Made On Port: " + getLocalPort() + ". Total Open: " + currentConnections + ", Cumulative Total: "+totalConnections);
+						totalConnections++;
+						QuickStatsEngine2.engine.PARALLEL_USERS.logEvent(currentConnections.get() + 1);
+						NetSocketHandler socketHandler = newHandler();
+						socketHandler.setServer(this);
+						socketHandler.setSocket(socket);
+						socketHandler.setConnectionNumber(totalConnections);
+						socketHandler.setConnectionRecord(connectionRecord);
+						getExecutor().execute(socketHandler);
+					} catch (Throwable t1) {
+						ConnectionMonitor.reportSocketThrowable(connectionRecord);
+						if (log.isErrorEnabled()) log.error("THROWABLE IN NSS MONITORED RUNTASK: "+ t1.getMessage(), t1);
+						QuickStatsEngine2.engine.MISC_ERRORS.logEvent("THROWABLE IN NSS MONITORED RUNTASK agj");
+						throw t1;
+					}
+				} catch (Exception e) {
+					if (log.isErrorEnabled()) log.error("EXCEPTION IN NSS RUNTASK: "+e.getMessage(),e);
+					QuickStatsEngine2.engine.MISC_ERRORS.logEvent("EXCEPTION IN NETSERVERSOCKET atg");
+				}
+				catch (Throwable t) {
+					if (log.isErrorEnabled()) log.error("THROWABLE IN NSS RUNTASK: "+t.getMessage(),t);
+					throw t;
+				}
+			}
+		} catch (RuntimeException re) {
+			throw re;
+		} finally {
+			try {
+				getServerSocket().close();
+			} catch (IOException ioe) {
+				if (log.isErrorEnabled()) log.error(ioe.getMessage(),ioe);
+			}
+		}
+	}
+	
+	// I cannot understand what this code is doing exactly. Can someone comment each line? James.
+	private boolean balanceServerNeededButNotActive(NetSocket socket) throws IOException, Exception {
+		// Check if load balancing is enabled and it is not NIO balancer
+		if (TripPlannerServerConfig.isBalanceServerEnabled() && !(TripPlanner.getTripPlanner().getBalanceServer() instanceof TpLoadBalanceServer)) {
+			if(socket.getSocket().getLocalPort() == TpBalanceServerXmlConfig.getServerPort()){
+				BalanceServerConfig balanceServerConfig = TripPlanner.getTripPlanner().getBalanceServer().getBalanceServerConfig();
+				if(!balanceServerConfig.isBalanceServerActive()){
+					socket.close();
+					return true;
+				}
+			}
+		}
+		return false;
+	}
+
+	protected Executor getExecutor() {
+		return ThreadManager.MAIN;
+	}
+
+	/**
+	 * Shutdown!
+	 */
+	public void shutdown(boolean wait) {
+		shutdown = true;
+		if (wait) {
+			while (currentConnections.get() > 0) {
+				try {
+					Thread.sleep(100);
+				} catch (Exception e) {
+				}
+			}
+		}
+	}
+
+	/**
+	 * Indicates a handler has started.
+	 */
+	void handlerStarted() {
+		currentConnections.getAndIncrement();
+	}
+
+	/**
+	 * Indicates a handler has started.
+	 */
+	synchronized void handlerFinished() {
+		currentConnections.getAndDecrement();
+	}
+
+}

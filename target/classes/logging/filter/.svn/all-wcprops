@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/filter
+END
+TpIntervalLogFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 91
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/filter/TpIntervalLogFilter.java
+END
+LoggerIdFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/filter/LoggerIdFilter.java
+END
+TpLogFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/filter/TpLogFilter.java
+END

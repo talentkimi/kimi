@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 66
+/svn/!svn/ver/53813/branches/prod_5.20/c5/java/code/logging/config
+END
+ConfigException.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/config/ConfigException.java
+END
+LogWriterConfig.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/config/LogWriterConfig.java
+END
+LoggerConfig.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/!svn/ver/53813/branches/prod_5.20/c5/java/code/logging/config/LoggerConfig.java
+END
+LogReaderConfig.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/config/LogReaderConfig.java
+END
+FilterConfig.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/config/FilterConfig.java
+END
+XMLGrabberConfig.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/config/XMLGrabberConfig.java
+END
+LoggingConfig.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/config/LoggingConfig.java
+END

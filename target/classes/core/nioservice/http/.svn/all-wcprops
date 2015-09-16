@@ -1,0 +1,29 @@
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/nioservice/http
+END
+HttpMsgParseException.java
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/nioservice/http/HttpMsgParseException.java
+END
+HttpMessage.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/nioservice/http/HttpMessage.java
+END
+HttpRequest.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/nioservice/http/HttpRequest.java
+END
+HttpResponse.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/nioservice/http/HttpResponse.java
+END

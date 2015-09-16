@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 67
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/filelog
+END
+IndexedLogFileWriter.java
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/filelog/IndexedLogFileWriter.java
+END
+IndexedLogFileIndexer.java
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/filelog/IndexedLogFileIndexer.java
+END
+IndexedLogFileUtils.java
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/filelog/IndexedLogFileUtils.java
+END
+IndexedLogFileReader.java
+K 25
+svn:wc:ra_dav:version-url
+V 93
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/filelog/IndexedLogFileReader.java
+END
+LogDatabase.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/filelog/LogDatabase.java
+END
+TpLogRecordReader.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/filelog/TpLogRecordReader.java
+END
+DatabaseFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 87
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/filelog/DatabaseFilter.java
+END

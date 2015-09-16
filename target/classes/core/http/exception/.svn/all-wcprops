@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/exception
+END
+HttpInternalServerException.java
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/exception/HttpInternalServerException.java
+END
+HttpMethodNotAllowedException.java
+K 25
+svn:wc:ra_dav:version-url
+V 106
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/exception/HttpMethodNotAllowedException.java
+END
+HttpOkException.java
+K 25
+svn:wc:ra_dav:version-url
+V 92
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/exception/HttpOkException.java
+END
+HttpMaxRedirectsException.java
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/exception/HttpMaxRedirectsException.java
+END
+HttpNotFoundException.java
+K 25
+svn:wc:ra_dav:version-url
+V 98
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/exception/HttpNotFoundException.java
+END
+HttpBadRequestException.java
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/exception/HttpBadRequestException.java
+END
+HttpException.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/exception/HttpException.java
+END

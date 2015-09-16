@@ -1,0 +1,143 @@
+<?xml version="1.0" encoding="utf-8"?>
+<wsdl:definitions xmlns:soap="http://schemas.xmlsoap.org/wsdl/soap/" xmlns:tm="http://microsoft.com/wsdl/mime/textMatching/" xmlns:soapenc="http://schemas.xmlsoap.org/soap/encoding/" xmlns:mime="http://schemas.xmlsoap.org/wsdl/mime/" xmlns:tns="http://gpsso.com/" xmlns:s="http://www.w3.org/2001/XMLSchema" xmlns:soap12="http://schemas.xmlsoap.org/wsdl/soap12/" xmlns:http="http://schemas.xmlsoap.org/wsdl/http/" targetNamespace="http://gpsso.com/" xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">
+  <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">&lt;b&gt;欢迎访问：&lt;a href='http://www.gpsso.com'&gt;www.gpsso.com&lt;/a&gt;，谢谢您的支持！&lt;/b&gt;</wsdl:documentation>
+  <wsdl:types>
+    <s:schema elementFormDefault="qualified" targetNamespace="http://gpsso.com/">
+      <s:element name="SearchIdCard">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="IdCard" type="s:string" />
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="SearchIdCardResponse">
+        <s:complexType>
+          <s:sequence>
+            <s:element minOccurs="0" maxOccurs="1" name="SearchIdCardResult">
+              <s:complexType mixed="true">
+                <s:sequence>
+                  <s:any />
+                </s:sequence>
+              </s:complexType>
+            </s:element>
+          </s:sequence>
+        </s:complexType>
+      </s:element>
+      <s:element name="ApiSoapHeader" type="tns:ApiSoapHeader" />
+      <s:complexType name="ApiSoapHeader">
+        <s:sequence>
+          <s:element minOccurs="0" maxOccurs="1" name="APICode" type="s:string" />
+          <s:element minOccurs="0" maxOccurs="1" name="APIKey" type="s:string" />
+        </s:sequence>
+        <s:anyAttribute />
+      </s:complexType>
+    </s:schema>
+  </wsdl:types>
+  <wsdl:message name="SearchIdCardSoapIn">
+    <wsdl:part name="parameters" element="tns:SearchIdCard" />
+  </wsdl:message>
+  <wsdl:message name="SearchIdCardSoapOut">
+    <wsdl:part name="parameters" element="tns:SearchIdCardResponse" />
+  </wsdl:message>
+  <wsdl:message name="SearchIdCardApiSoapHeader">
+    <wsdl:part name="ApiSoapHeader" element="tns:ApiSoapHeader" />
+  </wsdl:message>
+  <wsdl:message name="SearchIdCardHttpGetIn">
+    <wsdl:part name="IdCard" type="s:string" />
+  </wsdl:message>
+  <wsdl:message name="SearchIdCardHttpGetOut">
+    <wsdl:part name="Body" type="s:string"/>
+  </wsdl:message>
+  <wsdl:message name="SearchIdCardHttpPostIn">
+    <wsdl:part name="IdCard" type="s:string" />
+  </wsdl:message>
+  <wsdl:message name="SearchIdCardHttpPostOut">
+    <wsdl:part name="Body" type="s:string"/>
+  </wsdl:message>
+  <wsdl:portType name="IdCardSoap">
+    <wsdl:operation name="SearchIdCard">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">身份证号码查询，请输入15位或18位身份证</wsdl:documentation>
+      <wsdl:input message="tns:SearchIdCardSoapIn" />
+      <wsdl:output message="tns:SearchIdCardSoapOut" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:portType name="IdCardHttpGet">
+    <wsdl:operation name="SearchIdCard">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">身份证号码查询，请输入15位或18位身份证</wsdl:documentation>
+      <wsdl:input message="tns:SearchIdCardHttpGetIn" />
+      <wsdl:output message="tns:SearchIdCardHttpGetOut" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:portType name="IdCardHttpPost">
+    <wsdl:operation name="SearchIdCard">
+      <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">身份证号码查询，请输入15位或18位身份证</wsdl:documentation>
+      <wsdl:input message="tns:SearchIdCardHttpPostIn" />
+      <wsdl:output message="tns:SearchIdCardHttpPostOut" />
+    </wsdl:operation>
+  </wsdl:portType>
+  <wsdl:binding name="IdCardSoap" type="tns:IdCardSoap">
+    <soap:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="SearchIdCard">
+      <soap:operation soapAction="http://gpsso.com/SearchIdCard" style="document" />
+      <wsdl:input>
+        <soap:body use="literal" />
+        <soap:header message="tns:SearchIdCardApiSoapHeader" part="ApiSoapHeader" use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="IdCardSoap12" type="tns:IdCardSoap">
+    <soap12:binding transport="http://schemas.xmlsoap.org/soap/http" />
+    <wsdl:operation name="SearchIdCard">
+      <soap12:operation soapAction="http://gpsso.com/SearchIdCard" style="document" />
+      <wsdl:input>
+        <soap12:body use="literal" />
+        <soap12:header message="tns:SearchIdCardApiSoapHeader" part="ApiSoapHeader" use="literal" />
+      </wsdl:input>
+      <wsdl:output>
+        <soap12:body use="literal" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="IdCardHttpGet" type="tns:IdCardHttpGet">
+    <http:binding verb="GET" />
+    <wsdl:operation name="SearchIdCard">
+      <http:operation location="/SearchIdCard" />
+      <wsdl:input>
+        <http:urlEncoded />
+      </wsdl:input>
+      <wsdl:output>
+        <mime:content part="Body" type="text/xml" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:binding name="IdCardHttpPost" type="tns:IdCardHttpPost">
+    <http:binding verb="POST" />
+    <wsdl:operation name="SearchIdCard">
+      <http:operation location="/SearchIdCard" />
+      <wsdl:input>
+        <mime:content type="application/x-www-form-urlencoded" />
+      </wsdl:input>
+      <wsdl:output>
+        <mime:content part="Body" type="text/xml" />
+      </wsdl:output>
+    </wsdl:operation>
+  </wsdl:binding>
+  <wsdl:service name="IdCard">
+    <wsdl:documentation xmlns:wsdl="http://schemas.xmlsoap.org/wsdl/">&lt;b&gt;欢迎访问：&lt;a href='http://www.gpsso.com'&gt;www.gpsso.com&lt;/a&gt;，谢谢您的支持！&lt;/b&gt;</wsdl:documentation>
+    <wsdl:port name="IdCardSoap" binding="tns:IdCardSoap">
+      <soap:address location="http://www.gpsso.com/webservice/idcard/idcard.asmx" />
+    </wsdl:port>
+    <wsdl:port name="IdCardSoap12" binding="tns:IdCardSoap12">
+      <soap12:address location="http://www.gpsso.com/webservice/idcard/idcard.asmx" />
+    </wsdl:port>
+    <wsdl:port name="IdCardHttpGet" binding="tns:IdCardHttpGet">
+      <http:address location="http://www.gpsso.com/webservice/idcard/idcard.asmx" />
+    </wsdl:port>
+    <wsdl:port name="IdCardHttpPost" binding="tns:IdCardHttpPost">
+      <http:address location="http://www.gpsso.com/webservice/idcard/idcard.asmx" />
+    </wsdl:port>
+  </wsdl:service>
+</wsdl:definitions>

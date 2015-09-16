@@ -1,0 +1,165 @@
+package logging.loadtest;
+
+import java.sql.Connection;
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
+import java.util.concurrent.BlockingQueue;
+import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.ThreadPoolExecutor;
+import java.util.concurrent.TimeUnit;
+
+import logging.HttpLogRecord;
+import logging.TpLogRecord;
+import logging.config.LoggingConfig;
+import logging.config.XMLGrabberConfig;
+import logging.server.CmdRequestGetExistsLoggers;
+import logging.server.CmdResponse;
+import logging.server.CmdResponseLoggersList;
+
+import com.mchange.v2.c3p0.ComboPooledDataSource;
+
+import core.sql.SqlConnectionPool;
+import core.sql.mysql.MySqlJdbc;
+import core.util.ConfigClassFile;
+
+/**
+ * Fetches xml requests from Logging Server and stores them into DB for using by load test tools.
+ * @author dmytro
+ */
+public class XMLGrabber {
+	private static BlockingQueue<TpLogRecord> recordsToStore = new LinkedBlockingQueue<TpLogRecord>(5000); 
+	private static BlockingQueue<String> loginsToFetch = new LinkedBlockingQueue<String>();
+	
+	final static String FROM = "-from";
+	final static String TILL = "-till";
+	final static String HOST = "-host";
+	final static String USER = "-u";
+	final static String PWD  = "-p";
+	final static String DB	 = "-db";
+	final static String RECORDING_NAME = "-r";
+
+	/**
+	 * Fetches xml requests from Logging Server and stores them into DB for using by load test tools.
+	 * @param args
+	 * It takes configuration from "java/config/"(see xmlgrabber.xml),
+	 *  which might be overriden by following command line parameters: 
+	 * -from<yyyy-MM-dd-HH-mm-ss>
+	 * -till<yyyy-MM-dd-HH-mm-ss> 
+	 * -host<sql server host/ip>
+	 * -u<sql user name>
+	 * -p<sql user password>
+	 * -db<db name>
+	 */
+	public static void main(String[] args) {
+		try {
+			init("java/config/");
+			for(String cmd : args){
+				if (cmd.startsWith(FROM)) {
+					XMLGrabberConfig.setFrom(cmd.substring(FROM.length()).trim());
+				} else if (cmd.startsWith(TILL)) {
+					XMLGrabberConfig.setTill(cmd.substring(TILL.length()).trim());
+				} else if (cmd.startsWith(HOST)) {
+					XMLGrabberConfig.setDbHost(cmd.substring(HOST.length()).trim());
+				} else if (cmd.startsWith(USER)) {
+					XMLGrabberConfig.setDbUserName(cmd.substring(USER.length()).trim());
+				} else if (cmd.startsWith(PWD)) {
+					XMLGrabberConfig.setDbUserPwd(cmd.substring(PWD.length()).trim());
+				} else if (cmd.startsWith(DB)) {
+					XMLGrabberConfig.setDbName(cmd.substring(DB.length()).trim());
+				} else if (cmd.startsWith(RECORDING_NAME)) {
+					XMLGrabberConfig.setRecordingName(cmd.substring(RECORDING_NAME.length()).trim());
+				}
+			}
+
+			long fromTimestamp = parseDateTime(XMLGrabberConfig.getFrom());
+			long tillTimestamp = parseDateTime(XMLGrabberConfig.getTill());
+					
+
+			MySqlJdbc jdbc = new MySqlJdbc(XMLGrabberConfig.getDbHost(), 
+					XMLGrabberConfig.getDbUserName(), XMLGrabberConfig.getDbUserPwd());
+			ComboPooledDataSource pool = SqlConnectionPool.createAndSetupPooledDataSource(
+					XMLGrabberConfig.getDbName(), jdbc, XMLGrabberConfig.getSqlConnectionPoolSize());
+
+			CmdRequestGetExistsLoggers cmd = new CmdRequestGetExistsLoggers(LoggingConfig.getServerHost(),
+					LoggingConfig.getServerPort());
+			cmd.setBaseLoggerId(HttpLogRecord.TYPE);
+			CmdResponse resp = cmd.send();
+			loginsToFetch.addAll(((CmdResponseLoggersList) resp).getResult());
+			
+			int recordingID = createRecordingDBEntry(XMLGrabberConfig.getRecordingName(), 
+					fromTimestamp, tillTimestamp, pool);
+			
+			int numberOfStoringThreads = XMLGrabberConfig.getNumberOfStoringThreads();
+			ThreadPoolExecutor storersPool = new ThreadPoolExecutor(numberOfStoringThreads , 
+					numberOfStoringThreads,	6, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+			for(int i = 0; i<numberOfStoringThreads; i++){
+				storersPool.execute(new StoreRecordsTask(pool.getConnection(), recordsToStore, recordingID));
+			}
+			
+			int numberOfFetchingThreads = XMLGrabberConfig.getNumberOfFetchingThreads();
+			ThreadPoolExecutor fetchersPool = new ThreadPoolExecutor(numberOfFetchingThreads , 
+					numberOfFetchingThreads, 6, TimeUnit.SECONDS, new LinkedBlockingQueue<Runnable>());
+			for(int i = 0; i<numberOfFetchingThreads; i++){
+				fetchersPool.execute(new FetchRecordsTask(fromTimestamp, tillTimestamp, recordsToStore, loginsToFetch));
+			}
+			
+			while(!Thread.currentThread().isInterrupted()){
+				if(loginsToFetch.isEmpty() && recordsToStore.isEmpty() && (fetchersPool.getActiveCount() == 0)){
+					storersPool.shutdownNow();
+					fetchersPool.shutdownNow();
+					return;
+				}
+				Thread.sleep(1000);
+			}
+			
+		} catch (Throwable ex) {
+			ex.printStackTrace();
+		}
+	}
+
+	private static int createRecordingDBEntry(String recordingName, long fromTimestamp, long tillTimestamp, 
+			ComboPooledDataSource pool) throws SQLException {
+		Connection connection = null;
+		Statement statement = null;
+		try {
+			connection = pool.getConnection();
+			statement = connection.createStatement();
+			statement.executeUpdate("INSERT INTO LTRecording "+
+							" (recordingID, recordingName, timestampStarted, timestampEnded, description) " + 
+							" VALUES (0,'"+recordingName+"',"+fromTimestamp+","+tillTimestamp+",'description')", 
+							Statement.RETURN_GENERATED_KEYS);
+			ResultSet keys = statement.getGeneratedKeys();
+			keys.next();
+			return keys.getInt(1);
+		} finally {
+			if(statement != null){
+				try {
+					statement.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+			if(connection != null){
+				try {
+					connection.close();
+				} catch (SQLException e) {
+					e.printStackTrace();
+				}
+			}
+		}
+	}
+
+	private static long parseDateTime(String str) throws ParseException {
+		final SimpleDateFormat fmt = new SimpleDateFormat("yyyy-MM-dd-HH-mm-ss");
+		return fmt.parse(str).getTime();
+	}
+
+	private static void init(String configPath) throws Throwable {
+		ConfigClassFile config = new ConfigClassFile(configPath, false);
+		config.addConfig(LoggingConfig.class);
+		config.addConfig(XMLGrabberConfig.class);
+	}
+}

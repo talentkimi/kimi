@@ -1,0 +1,315 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE log4j:configuration SYSTEM "log4j.dtd">
+<!-- If you want watch the log4j loading config, add debug="true" after xmlns:log4j="..." -->
+<log4j:configuration xmlns:log4j="http://jakarta.apache.org/log4j/">
+	<!-- CONSOLE is set to be a ConsoleAppender -->
+	<appender name="CONSOLE" class="org.apache.log4j.ConsoleAppender">
+		<!-- CONSOLE uses PatternLayout -->
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%d{dd/MM HH:mm:ss}] %-6p %c  %m%n" />
+		</layout>
+	</appender>
+
+	<!-- ERROR is set to be a RollingFileAppender -->
+	<appender name="TRACE" class="org.apache.log4j.RollingFileAppender">
+		<param name="file" value="logs/c5-trace.log" />
+		<param name="MaxFileSize" value="10000KB" />
+		<!-- Keep 20 backup file -->
+		<param name="MaxBackupIndex" value="20" />
+		<!-- ERROR uses PatternLayout -->
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%d{dd/MM HH:mm:ss}] %-6p (%c)%n%m%n%n" />
+		</layout>
+		<filter class="org.apache.log4j.varia.LevelRangeFilter">
+			<param name="LevelMax" value="trace" />
+			<param name="LevelMin" value="trace" />
+			<param name="AcceptOnMatch" value="true" />
+		</filter>
+	</appender>
+
+	<!-- DEBUG is set to be a RollingFileAppender -->
+	<appender name="DEBUG" class="org.apache.log4j.RollingFileAppender">
+		<param name="file" value="logs/c5-debug.log" />
+		<param name="MaxFileSize" value="10000KB" />
+		<!-- Keep 20 backup file -->
+		<param name="MaxBackupIndex" value="20" />
+		<!-- ERROR uses PatternLayout -->
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%d{dd/MM HH:mm:ss}] %-6p (%c)%n%m%n%n" />
+		</layout>
+		<filter class="org.apache.log4j.varia.LevelRangeFilter">
+			<param name="LevelMax" value="debug" />
+			<param name="LevelMin" value="debug" />
+			<param name="AcceptOnMatch" value="true" />
+		</filter>
+	</appender>
+
+	<!-- INFO is set to be a RollingFileAppender -->
+	<appender name="INFO" class="org.apache.log4j.RollingFileAppender">
+		<param name="file" value="logs/c5-info.log" />
+		<param name="MaxFileSize" value="10000KB" />
+		<!-- Keep 20 backup file -->
+		<param name="MaxBackupIndex" value="20" />
+		<!-- ERROR uses PatternLayout -->
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%d{dd/MM HH:mm:ss}] %-6p (%c)%n%m%n%n" />
+		</layout>
+		<filter class="org.apache.log4j.varia.LevelRangeFilter">
+			<param name="LevelMax" value="info" />
+			<param name="LevelMin" value="info" />
+			<param name="AcceptOnMatch" value="true" />
+		</filter>
+	</appender>
+
+	<!-- WARN is set to be a RollingFileAppender -->
+	<appender name="WARN" class="org.apache.log4j.RollingFileAppender">
+		<param name="file" value="logs/c5-warn.log" />
+		<param name="MaxFileSize" value="10000KB" />
+		<!-- Keep 20 backup file -->
+		<param name="MaxBackupIndex" value="20" />
+		<!-- ERROR uses PatternLayout -->
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%d{dd/MM HH:mm:ss}] %-6p (%c)%n%m%n%n" />
+		</layout>
+		<filter class="org.apache.log4j.varia.LevelRangeFilter">
+			<param name="LevelMax" value="warn" />
+			<param name="LevelMin" value="warn" />
+			<param name="AcceptOnMatch" value="true" />
+		</filter>
+	</appender>
+
+	<!-- ERROR is set to be a RollingFileAppender -->
+	<appender name="ERROR" class="org.apache.log4j.RollingFileAppender">
+		<param name="file" value="logs/c5-error.log" />
+		<param name="MaxFileSize" value="10000KB" />
+		<!-- Keep 20 backup file -->
+		<param name="MaxBackupIndex" value="20" />
+		<!-- ERROR uses PatternLayout -->
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%d{dd/MM HH:mm:ss}] %-6p (%c)%n%m%n%n" />
+		</layout>
+		<filter class="org.apache.log4j.varia.LevelRangeFilter">
+			<param name="LevelMax" value="error" />
+			<param name="LevelMin" value="error" />
+			<param name="AcceptOnMatch" value="true" />
+		</filter>
+	</appender>
+
+	<!-- FATAL is set to be a RollingFileAppender -->
+	<appender name="FATAL" class="org.apache.log4j.RollingFileAppender">
+		<param name="file" value="logs/c5-fatal.log" />
+		<param name="MaxFileSize" value="10000KB" />
+		<!-- Keep 20 backup file -->
+		<param name="MaxBackupIndex" value="20" />
+		<!-- ERROR uses PatternLayout -->
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%d{dd/MM HH:mm:ss}] %-6p (%c)%n%m%n%n" />
+		</layout>
+		<filter class="org.apache.log4j.varia.LevelRangeFilter">
+			<param name="LevelMax" value="fatal" />
+			<param name="LevelMin" value="fatal" />
+			<param name="AcceptOnMatch" value="true" />
+		</filter>
+	</appender>
+
+	<!-- BOOT is set to be a RollingFileAppender -->
+	<appender name="BOOT" class="org.apache.log4j.RollingFileAppender">
+		<param name="file" value="logs/c5-boot.log" />
+		<param name="MaxFileSize" value="10000KB" />
+		<!-- Keep 20 backup file -->
+		<param name="MaxBackupIndex" value="20" />
+		<!-- ERROR uses PatternLayout -->
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%d{dd/MM HH:mm:ss}] %-6p (%c)%n%m%n%n" />
+		</layout>
+	</appender>
+
+
+	<!-- SQL_PROFILE - special log for logging all sql statements at the JDBC driver level -->
+	<appender name="SQL_PROFILE" class="org.apache.log4j.RollingFileAppender">
+		<param name="file" value="logs/c5-sql-profiler.log" />
+		<!-- Used for debug only so allow large file size -->
+		<param name="MaxFileSize" value="100000KB" />
+		<!-- Keep 20 backup file -->
+		<param name="MaxBackupIndex" value="20" />
+		<!-- ERROR uses PatternLayout -->
+		<layout class="org.apache.log4j.PatternLayout">
+			<!-- jdbc log statements include timestamps already so only 
+				minimal formatting required -->
+			<param name="ConversionPattern" value="%m%n" />
+		</layout>
+	</appender>
+
+	<!-- FLIGHTPREFETCHER - special log for logging FlightPrefether events -->
+	<appender name="FLIGHTPREFETCHER" class="org.apache.log4j.RollingFileAppender">
+		<param name="file" value="logs/c5-flightprefetcher.log" />
+		<param name="MaxFileSize" value="10000KB" />
+		<!-- Keep 20 backup file -->
+		<param name="MaxBackupIndex" value="20" />
+		<!-- FLIGHTPREFETCHER uses PatternLayout -->
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%d{dd/MM HH:mm:ss}] %-6p (%c)%n%m%n%n" />
+		</layout>
+	</appender>
+
+	<!-- COMMAND MONITOR - special log for logging commands handled/ handling -->
+	<appender name="COMMANDMONITOR" class="org.apache.log4j.RollingFileAppender">
+		<param name="file" value="logs/c5-commandmonitor.log" />
+		<param name="MaxFileSize" value="10000KB" />
+		<!-- Keep 20 backup file -->
+		<param name="MaxBackupIndex" value="20" />
+		<!-- COMMANDMONITOR uses PatternLayout -->
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%d{dd/MM HH:mm:ss}] %-6p (%c)%n%m%n%n" />
+		</layout>
+	</appender>
+
+	<appender name="INSERTQUERY" class="org.apache.log4j.RollingFileAppender">
+		<param name="file" value="logs/c5-insertquery.log" />
+		<param name="MaxFileSize" value="10000KB" />
+		<!-- Keep 20 backup file -->
+		<param name="MaxBackupIndex" value="20" />
+		<!-- COMMANDMONITOR uses PatternLayout -->
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%d{dd/MM HH:mm:ss}] %-6p (%c)%n%m%n%n" />
+		</layout>
+	</appender>
+
+	<appender name="HOTELAUDIT" class="org.apache.log4j.RollingFileAppender">
+		<param name="file" value="logs/c5-hotelaudit.log" />
+		<param name="MaxFileSize" value="10000KB" />
+		<!-- Keep 20 backup file -->
+		<param name="MaxBackupIndex" value="20" />
+		<!-- COMMANDMONITOR uses PatternLayout -->
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%d{dd/MM HH:mm:ss}] %-6p (%c)%n%m%n%n" />
+		</layout>
+	</appender>
+
+	<!-- NIOLOADBALANCER - special log for logging NIO Load Balancer events -->
+	<appender name="NIOLOADBALANCER" class="org.apache.log4j.RollingFileAppender">
+		<param name="file" value="logs/c5-nioloadbalancer.log" />
+		<param name="MaxFileSize" value="10000KB" />
+		<!-- Keep 20 backup file -->
+		<param name="MaxBackupIndex" value="20" />
+		<!-- NIOLOADBALANCER uses PatternLayout -->
+		<layout class="org.apache.log4j.PatternLayout">
+			<param name="ConversionPattern" value="[%d{dd/MM HH:mm:ss}] %-6p (%c)%n%m%n%n" />
+		</layout>
+	</appender>
+
+	<logger name="project.tripplanner.bookingengine" additivity="true">
+		<level value="INFO" />
+		<appender-ref ref="INFO" />
+	</logger>
+
+	<logger name="project.tripplanner.datasource.hoteldata" additivity="true">
+		<level value="INFO" />
+		<appender-ref ref="INFO" />
+	</logger>
+
+	<logger name="engine.accommodation" additivity="true">
+		<level value="INFO" />
+		<appender-ref ref="INFO" />
+	</logger>
+
+	<logger name="engine.hotelmatching" additivity="true">
+		<level value="INFO" />
+		<appender-ref ref="ERROR" />
+		<appender-ref ref="WARN" />
+		<appender-ref ref="INFO" />
+	</logger>
+
+	<logger name="project.tripplanner.routingengine.faredatabase" additivity="true">
+		<level value="INFO" />
+		<appender-ref ref="INFO" />
+	</logger>
+
+	<logger name="project.tripplanner.datasource.faredatabase" additivity="true">
+		<level value="INFO" />
+		<appender-ref ref="INFO" />
+	</logger>
+
+	<logger name="project.tripplanner.database.hibernate" additivity="true">
+		<level value="INFO" />
+		<appender-ref ref="INFO" />
+	</logger>
+
+	<logger name="project.tripplanner.command.referral" additivity="true">
+		<level value="INFO" />
+		<appender-ref ref="INFO" />
+	</logger>
+
+	<logger name="TripPlanner.CreditCardMasker" additivity="false">
+		<level value="INFO" />
+		<appender-ref ref="INFO" />
+	</logger>
+
+	<logger name="QuickStats" additivity="false">
+		<level value="INFO" />
+		<appender-ref ref="INFO" />
+	</logger>
+
+	<logger name="project.tripplanner.datasource.airline" additivity="true">
+		<level value="WARN" />
+		<appender-ref ref="WARN" />
+	</logger>
+
+	<logger name="TripPlanner.Boot" additivity="false">
+		<!-- boot log only for start and shut down, append to BOOT and CONSOLE -->
+		<level value="ALL" />
+		<appender-ref ref="BOOT" />
+		<appender-ref ref="CONSOLE" />
+	</logger>
+
+	<logger name="SQL_PROFILER" additivity="false">
+		<!-- Optional sql profiler - configured in DatabaseConfig -->
+		<level value="ALL" />
+		<appender-ref ref="SQL_PROFILE" />
+	</logger>
+
+	<logger name="project.tripplanner.tools.connectionmonitor" additivity="false">
+		<level value="TRACE" />
+		<appender-ref ref="COMMANDMONITOR" />
+	</logger>
+
+	<logger name="TripPlanner.InsertQuery" additivity="false">
+		<!-- boot log only for start and shut down, append to BOOT and CONSOLE -->
+		<level value="ALL" />
+		<appender-ref ref="INSERTQUERY" />
+	</logger>
+
+
+	<logger name="project.tripplanner.tools.flightprefetcher" additivity="false">
+		<level value="WARN" />
+		<appender-ref ref="FLIGHTPREFETCHER" />
+	</logger>
+
+	<logger name="TripPlanner.AccommodationAudit" additivity="false">
+		<!-- boot log only for start and shut down, append to BOOT and CONSOLE -->
+		<level value="ALL" />
+		<appender-ref ref="HOTELAUDIT" />
+	</logger>
+
+	<logger name="core.util.WatchDog.Monitor" additivity="false">
+		<level value="WARN" />
+		<appender-ref ref="WARN" />
+	</logger>
+
+	<logger name="core.nioservice" additivity="false">
+		<level value="WARN" />
+		<appender-ref ref="NIOLOADBALANCER" />
+	</logger>
+
+	<logger name="project.tripplanner.server.loadbalance" additivity="false">
+		<level value="WARN" />
+		<appender-ref ref="NIOLOADBALANCER" />
+	</logger>
+
+	<root>
+		<!-- Set root logger level to error and append to ERROR and CONSOLE -->
+		<priority value="WARN" />
+		<appender-ref ref="ERROR" />
+		<appender-ref ref="WARN" />
+	</root>
+</log4j:configuration>

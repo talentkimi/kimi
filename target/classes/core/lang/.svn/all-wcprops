@@ -1,0 +1,65 @@
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang
+END
+BasicType.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/BasicType.java
+END
+Hex.java
+K 25
+svn:wc:ra_dav:version-url
+V 70
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/Hex.java
+END
+StackTrace.java
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/StackTrace.java
+END
+StackTraceLogger.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/StackTraceLogger.java
+END
+ByteArrayString.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/ByteArrayString.java
+END
+Closeable.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/Closeable.java
+END
+LatLon.java
+K 25
+svn:wc:ra_dav:version-url
+V 73
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/LatLon.java
+END
+Vector3D.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/Vector3D.java
+END
+FieldFinder.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/FieldFinder.java
+END
+HashCode.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/lang/HashCode.java
+END

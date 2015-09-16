@@ -1,0 +1,341 @@
+package core.xml;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+
+import core.lang.Closeable;
+import core.util.EmptyIterator;
+
+/**
+ * XML!
+ */
+public interface Xml extends Closeable {
+
+	/** The empty list. */
+	List<Xml> EMPTY_LIST = Collections.unmodifiableList(new ArrayList<Xml>());
+	/** The empty list. */
+	Iterable<Xml> EMPTY_ITERABLE = new EmptyIterator<Xml>();
+
+	/** The XML reader. */
+	XmlReader READER = new XmlReader();
+	/** The XML writer. */
+	XmlWriter WRITER = new XmlWriter();
+
+	/** The xml type. */
+	byte TYPE_XML = 1;
+	/** The attribute type. */
+	byte TYPE_ATTRIBUTE = 2;
+	/** The comment type. */
+	byte TYPE_COMMENT = 4;
+	/** The declaration type. */
+	byte TYPE_DECLARATION = 8;
+
+	/**
+	 * Returns the child iterator.
+	 * @return the child iterator.
+	 */
+	Iterable<Xml> childIterator(String name);
+
+	/**
+	 * Returns the child list (unmodifiable).
+	 * @return the child list.
+	 */
+	List<Xml> childList();
+
+	/**
+	 * Returns the attribute list (unmodifiable).
+	 * @return the attribute list.
+	 */
+	List<Xml> attributeList();
+
+	/**
+	 * Returns the type.
+	 * @return the type.
+	 */
+	byte getType();
+
+	/**
+	 * Returns true if this is optional.
+	 * @return true if this is optional.
+	 */
+	boolean isOptional();
+
+	/**
+	 * Sets whether this is optional.
+	 * @param optional true to set this optional.
+	 */
+	void setOptional(boolean optional);
+
+	/**
+	 * Returns the name.
+	 * @return the name.
+	 */
+	String getName();
+
+	/**
+	 * Sets the name.
+	 * @param name the name.
+	 */
+	void setName(String name);
+
+	/**
+	 * Returns the value.
+	 * @return the value.
+	 */
+	Object getValue();
+
+	/**
+	 * Returns true if this has a value.
+	 * @return true if this has a value.
+	 */
+	boolean hasAValue();
+
+	/**
+	 * Sets the value.
+	 * @param value the value.
+	 */
+	void setValue(Object value);
+
+	/**
+	 * Parses the value from the given string.
+	 * @param value the value.
+	 * @return the parsed value.
+	 */
+	Object parseValue(String value);
+
+	/**
+	 * Returns true if this xml can have children.
+	 * @return true if this xml can have children.
+	 */
+	boolean canHaveChildren();
+
+	/**
+	 * Returns true if this xml can have attributes.
+	 * @return true if this xml can have attributes.
+	 */
+	boolean canHaveAttributes();
+
+	/**
+	 * Returns the number of children.
+	 * @return the number of children.
+	 */
+	int children();
+
+	/**
+	 * Returns the number of children with the given name.
+	 * @return the number of children with the given name.
+	 */
+	int children(String name);
+
+	/**
+	 * Returns true if this xml contains a child with the given name.
+	 * @param name the name.
+	 * @return true if this xml contains a child with the given name.
+	 */
+	boolean containsChild(String name);
+
+	/**
+	 * Returns the child at the given index.
+	 * @param index the index.
+	 * @return the child.
+	 */
+	Xml getChild(int index);
+
+	/**
+	 * Returns the child with the given name.
+	 * @param name the name.
+	 * @return the child.
+	 */
+	Xml getChild(String name);
+
+	/**
+	 * Returns the child with the given name.
+	 * @param name the name.
+	 * @return the child.
+	 */
+	Xml getChild(String name, boolean optional);
+
+	/**
+	 * Returns the child with the given name.
+	 * @param name the name.
+	 * @param index the index.
+	 * @return the child.
+	 */
+	Xml getChild(String name, int index);
+
+	/**
+	 * Remove all children.
+	 */
+	void removeChildren();
+
+	/**
+	 * Remove all attributes.
+	 */
+	void removeAttributes();
+
+	/**
+	 * Removes the child at the given index.
+	 * @param index
+	 * @return the child at the given index.
+	 */
+	Xml removeChild(int index);
+
+	/**
+	 * Removes the child with the given name.
+	 * @param name the name.
+	 * @return the child removed.
+	 */
+	Xml removeChild(String name);
+
+	/**
+	 * Removes the child with the given name.
+	 * @param name the name.
+	 * @param index the index.
+	 * @return the child removed.
+	 */
+	Xml removeChild(String name, int index);
+
+	/**
+	 * Sets the child at the given index.
+	 * @param index the index.
+	 * @param child the child.
+	 * @return the child replaced.
+	 */
+	Xml setChild(int index, Xml child);
+
+	/**
+	 * Adds the given child.
+	 * @param child the child to add.
+	 */
+	void addChild(Xml child);
+
+	/**
+	 * Adds the given child at the given index.
+	 * @param index the index.
+	 * @param child the child to add.
+	 */
+	void addChild(int index, Xml child);
+
+	/**
+	 * Returns a new child added to this xml.
+	 * @param name the child name.
+	 */
+	Xml newChild(String name);
+
+	/**
+	 * Returns a new child added to this xml at the given index.
+	 * @param name the child name.
+	 * @param index the index.
+	 * @return the new child.
+	 */
+	Xml newChildAt(String name, int index);
+
+	/**
+	 * Returns a new child added to this xml.
+	 * @param name the child name.
+	 */
+	Xml newChild(String name, Object value);
+
+	/**
+	 * Returns the number of attributes.
+	 * @return the number of attributes.
+	 */
+	int attributes();
+
+	/**
+	 * Returns the number of attributes with the given name.
+	 * @return the number of attributes with the given name.
+	 */
+	int attributes(String name);
+
+	/**
+	 * Returns true if this xml contains a attribute with the given name.
+	 * @param name the name.
+	 * @return true if this xml contains a attribute with the given name.
+	 */
+	boolean containsAttribute(String name);
+
+	/**
+	 * Returns the attribute at the given index.
+	 * @param index the index.
+	 * @return the attribute.
+	 */
+	Xml getAttribute(int index);
+
+	/**
+	 * Returns the attribute with the given name.
+	 * @param name the name.
+	 * @return the attribute.
+	 */
+	Xml getAttribute(String name);
+
+	/**
+	 * Returns the attribute with the given name.
+	 * @param name the name.
+	 * @param index the index.
+	 * @return the attribute.
+	 */
+	Xml getAttribute(String name, int index);
+
+	/**
+	 * Removes the attribute at the given index.
+	 * @param index
+	 * @return the attribute at the given index.
+	 */
+	Xml removeAttribute(int index);
+
+	/**
+	 * Removes the attribute with the given name.
+	 * @param name the name.
+	 * @return the attribute removed.
+	 */
+	Xml removeAttribute(String name);
+
+	/**
+	 * Removes the attribute with the given name.
+	 * @param name the name.
+	 * @param index the index.
+	 * @return the attribute removed.
+	 */
+	Xml removeAttribute(String name, int index);
+
+	/**
+	 * Sets the attribute at the given index.
+	 * @param index the index.
+	 * @param attribute the attribute.
+	 * @return the attribute replaced.
+	 */
+	Xml setAttribute(int index, Xml attribute);
+
+	/**
+	 * Returns a new attribute added to this xml.
+	 * @param name the attribute name.
+	 * @return the attribute.
+	 */
+	Xml newAttribute(String name);
+
+	/**
+	 * Returns a new attribute added to this xml.
+	 * @param name the attribute name.
+	 * @param value the value.
+	 * @return the attribute.
+	 */
+	Xml newAttribute(String name, Object value);
+
+	/**
+	 * Adds the given attribute.
+	 * @param attribute the attribute to add.
+	 */
+	void addAttribute(Xml attribute);
+
+	/**
+	 * Clear this xml.
+	 */
+	void clear();
+
+	/**
+	 * Clear the value of this xml.
+	 */
+	void clearValue();
+}

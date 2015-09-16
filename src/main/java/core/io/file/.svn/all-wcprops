@@ -1,0 +1,53 @@
+K 25
+svn:wc:ra_dav:version-url
+V 64
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/io/file
+END
+File.java
+K 25
+svn:wc:ra_dav:version-url
+V 74
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/io/file/File.java
+END
+SimpleFileFilter.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/io/file/SimpleFileFilter.java
+END
+SynchronizedFile.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/io/file/SynchronizedFile.java
+END
+BinaryFile.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/io/file/BinaryFile.java
+END
+Directory.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/io/file/Directory.java
+END
+TextFile.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/io/file/TextFile.java
+END
+DebugLog.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/io/file/DebugLog.java
+END
+TextLine.java
+K 25
+svn:wc:ra_dav:version-url
+V 78
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/io/file/TextLine.java
+END

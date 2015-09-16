@@ -1,0 +1,337 @@
+package core.io;
+
+import java.io.BufferedInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.net.Socket;
+
+
+/**
+ * An Input Stream.
+ */
+public class StreamInput extends BufferedInputStream {
+
+	/** Indicates if this is closed. */
+	private boolean closed = false;
+	/** Indicates if the stream reading has to stop */
+	private boolean timedOut = false;
+	/** Indicates how many milliseconds stream can take to read */
+	private long timeout = 0;
+
+	/**
+	 * set stream timed out
+	 */
+	public void setStreamTimedOut() {
+		timedOut = true;
+	}
+
+	/**
+	 * set stream timeout
+	 * @param millis
+	 */
+	public void setStreamTimeout(long millis) {
+		if (millis >= 10000) {
+			timeout = millis;
+		} else if (millis <= 0) {
+			timeout = 0;
+		}
+	}
+
+	/**
+	 * check did the stream had timed out
+	 * @throws StreamTimedOutException
+	 */
+	private void checkTimedOut() throws StreamTimedOutException {
+		if (timedOut) {
+			throw new StreamTimedOutException("Operation timed out");
+		}
+	}
+
+	/**
+	 * check did the stream has to time out
+	 * @param useTimeout
+	 * @param millis
+	 * @throws StreamTimeoutException
+	 */
+	private void checkTimeout(boolean useTimeout, long millis) throws StreamTimeoutException {
+		if (!useTimeout) {
+			return;
+		}
+		long time = System.currentTimeMillis();
+		if (time > (millis + timeout)) {
+			throw new StreamTimeoutException("Operation took too long than expected [" + (time - millis) + " millis]");
+		}
+	}
+
+	/**
+	 * Returns true if closed.
+	 * @return true if closed.
+	 */
+	public boolean isClosed() {
+		return closed;
+	}
+
+	/**
+	 * Close this stream.
+	 */
+	public void close() throws IOException {
+		closed = true;
+		super.close();
+	}
+
+	/**
+	 * Creates a new input stream.
+	 * @param is the input stream to wrap.
+	 */
+	public StreamInput(InputStream is) {
+		super(is);
+	}
+
+	/**
+	 * Creates a new input stream.
+	 * @param f the file.
+	 */
+	public StreamInput(File f) throws FileNotFoundException {
+		super(new FileInputStream(f));
+	}
+
+	/**
+	 * Creates a new input stream.
+	 * @param f the file.
+	 */
+	public StreamInput(File f, int size) throws FileNotFoundException {
+		super(new FileInputStream(f), size);
+	}
+
+	/**
+	 * Creates a new input stream.
+	 * @param s the socket.
+	 */
+	public StreamInput(Socket s) throws IOException {
+		super(s.getInputStream());
+	}
+
+	/**
+	 * Checks the end of stream and throws an IOException if it has been reached.
+	 */
+	protected final void checkEndOfStream() throws IOException {
+		if (closed) {
+			throw new IOException("end of stream already reached");
+		}
+	}
+
+	/**
+	 * read the next byte of data
+	 * @return the next byte of data, or <code>-1</code> if the end of the stream is reached.
+	 * @throws IOException
+	 */
+	@Override
+	public int read() throws IOException {
+		//long startTime = System.currentTimeMillis();
+		checkTimedOut();
+		int theByte = super.read();
+		//long endTime = System.currentTimeMillis();
+		//QuickStatsEngine2.engine.INPUT_STREAM_READ_TIME.logEvent(endTime - startTime);
+		return theByte;
+	}
+
+	/**
+	 * read number of bytes
+	 * @param b
+	 * @param off
+	 * @param len
+	 * @return the number of bytes read, or <code>-1</code> if the end of the stream has been reached.
+	 * @throws IOException
+	 */
+	@Override
+	public int read(byte b[], int off, int len) throws IOException {
+		checkTimedOut();
+		return super.read(b, off, len);
+	}
+
+	/**
+	 * Reads until the end of the stream.
+	 * @return the byte array.
+	 * @throws IOException if an IO error occurs.
+	 */
+	public final byte[] readToByteArray() throws IOException {
+		return readToByteArray(true);
+	}
+
+	/**
+	 * Reads until the end of the stream.
+	 * @return the byte array.
+	 * @throws IOException if an IO error occurs.
+	 */
+	public final byte[] readToByteArray(boolean throwException) throws IOException {
+		checkEndOfStream();
+		ByteArrayOutputStream baos = new ByteArrayOutputStream(1024);
+		long time = System.currentTimeMillis();
+		boolean useTimeout = timeout > 0;
+		try {
+			while (true) {
+				checkTimeout(useTimeout, time);
+				int b = read();
+				if (b == -1) {
+					close();
+					break;
+				}
+				baos.write(b);
+			}
+		} catch (IOException ioe) {
+			if (throwException) {
+				throw ioe;
+			}
+		}
+		return baos.toByteArray();
+	}
+
+	private static final String IS_MULTIBYTE_READ_SYSVAR_NAME = "Core.readMultipleBytesIntoByteArray";
+
+	/**
+	 * Reads the given number of bytes from the stream.
+	 * @param length the number of bytes to read.
+	 * @return the bytes read.
+	 * @throws IOException if an IO error occurs.
+	 */
+	public final byte[] readToByteArray(int length) throws IOException {
+
+		checkEndOfStream();
+		byte[] array = new byte[length];
+		long time = System.currentTimeMillis();
+		boolean useTimeout = timeout > 0;
+
+		Boolean isMultibyteRead = null;
+//		if (TripPlanner.getTripPlanner().getSystemVariableManager() != null) {
+//			isMultibyteRead = TripPlanner.getTripPlanner().getSystemVariableManager().getVariableAsBoolean(IS_MULTIBYTE_READ_SYSVAR_NAME);
+//		}
+
+		// Default behaviour should be multi-byte read
+		if (isMultibyteRead == null || isMultibyteRead.booleanValue()) {
+			// Read multiple bytes at a time
+
+			int offset = 0;
+			checkTimeout(useTimeout, time);
+			int maxBytesToRead = length;
+			int numBytesLastRead = read(array, offset, maxBytesToRead);
+
+			while (numBytesLastRead != -1) {
+				offset = offset + numBytesLastRead;
+				// We don't want to run into an IndexOutOfBoundsException
+				if (offset >= length) {
+					break;
+				}
+				checkTimeout(useTimeout, time);
+				maxBytesToRead = length - offset;
+				numBytesLastRead = read(array, offset, maxBytesToRead);
+			}
+
+			// At this point offset has the total number of bytes read
+			if (offset < length) {
+				close();
+				throw new IOException("end of stream reached (" + offset + "/" + length + ")");
+			}
+		} else {
+			// Read a single byte at a time
+
+			for (int i = 0; i < length; i++) {
+				checkTimeout(useTimeout, time);
+				int b = read();
+				if (b == -1) {
+					close();
+					throw new IOException("end of stream reached (" + (i + 1) + "/" + length + ")");
+				}
+				array[i] = (byte) b;
+			}
+		}
+
+		return array;
+	}
+
+	/**
+	 * Read to the given output stream.
+	 * @param output the output.
+	 */
+	public void readTo(OutputStream output, long bytes) throws IOException {
+		readTo(output, bytes, true);
+	}
+
+	/**
+	 * Read to the given output stream.
+	 * @param output the output.
+	 */
+	public void readTo(OutputStream output) throws IOException {
+		readTo(output, -1, true);
+	}
+
+	/**
+	 * Read to the given output stream.
+	 * @param output the output.
+	 */
+	public void readTo(OutputStream output, boolean flush) throws IOException {
+		readTo(output, -1, flush);
+	}
+
+	/**
+	 * Read to the given output stream.
+	 * @param output the output.
+	 * @param flush true to flush when complete.
+	 */
+	public void readTo(OutputStream output, long bytes, boolean flush) throws IOException {
+		if (output == null) {
+			throw new NullPointerException();
+		}
+		if (isClosed()) {
+			throw new IOException("End of file already reached");
+		}
+		long time = System.currentTimeMillis();
+		boolean useTimeout = timeout > 0;
+		while (bytes > 0 || bytes == -1) {
+			checkTimeout(useTimeout, time);
+			int i = read();
+			if (i == -1) {
+				close();
+				break;
+			}
+			output.write(i);
+			if (bytes > 0) {
+				bytes--;
+			}
+		}
+		output.flush();
+	}
+
+	/**
+	 * Reads and returns a line of text in bytes.
+	 * @return a line of text in bytes or null if the end of stream has been reached.
+	 */
+	public final byte[] readLineBytes() throws IOException {
+		if (isClosed()) {
+			return null;
+		}
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+		long time = System.currentTimeMillis();
+		boolean useTimeout = timeout > 0;
+		while (true) {
+			checkTimeout(useTimeout, time);
+			int i = read();
+			if (i == -1) {
+				close();
+				break;
+			}
+			if (i == 13) {
+				continue;
+			}
+			if (i == 10) {
+				break;
+			}
+			baos.write((byte) i);
+		}
+		return baos.toByteArray();
+	}
+}

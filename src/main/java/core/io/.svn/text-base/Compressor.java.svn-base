@@ -1,0 +1,239 @@
+package core.io;
+
+import java.io.BufferedInputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.zip.DeflaterOutputStream;
+import java.util.zip.InflaterInputStream;
+
+import project.tripplanner.tools.stats.QuickStats2.QuickStatsEngine2;
+
+/**
+ * A Compressor.
+ */
+public class Compressor {
+
+	/**
+	 * Compress the given bytes.
+	 * @param uncompressed the bytes.
+	 * @return the bytes.
+	 */
+	public synchronized byte[] compress(byte[] uncompressed) throws IOException {
+		if (uncompressed.length == 0) {
+			return new byte[0];
+		}
+//		long timeStarted = System.currentTimeMillis();
+		ByteArrayOutputStream compressed = new ByteArrayOutputStream();
+		DeflaterOutputStream output = newOutputStream(compressed);
+		output.write(uncompressed, 0, uncompressed.length);
+		output.close();
+		byte[] data = compressed.toByteArray();
+//		long timeFinished = System.currentTimeMillis();
+//		if (log.isDebugEnabled()) log.debug ("[Compressed] " + uncompressed.length + " -> " + data.length + " bytes, (" + (timeFinished - timeStarted + " millis)"));
+		return data;
+	}
+
+	/**
+	 * Compress the data from the given input stream to the output stream.
+	 * @param input the input (uncompressed data).
+	 * @param output the output (compressed data).
+	 */
+	public synchronized void compress(InputStream input, OutputStream output) throws IOException {
+		output = newOutputStream(output);
+		while (true) {
+			int available = input.available();
+			if (available == 0) {
+				break;
+			}
+			byte[] data = new byte[available];
+			int length = input.read(data);
+			output.write(data, 0, length);
+		}
+	}
+
+	/**
+	 * Compress the given string.
+	 * @param text the string.
+	 * @return the bytes.
+	 */
+	public byte[] compressString(String text) throws IOException {
+		if (text.length() == 0) {
+			return new byte[0];
+		}
+		return compress(text.getBytes());
+	}
+
+	/**
+	 * Compress the given string.
+	 * @param text the string.
+	 * @param charset the character set.
+	 * @return the bytes.
+	 */
+	public byte[] compressString(String text, String charset) throws IOException {
+		if (text.length() == 0) {
+			return new byte[0];
+		}
+		return compress(text.getBytes(charset));
+	}
+
+	/**
+	 * Decompress the given bytes to a string.
+	 * @param compressed the bytes.
+	 * @param uncompressedLength the uncompressed length.
+	 * @return the bytes.
+	 */
+	public String decompressString(byte[] compressed, int uncompressedLength) throws IOException {
+		if (uncompressedLength == 0) {
+			return "";
+		}
+		return new String(decompress(compressed, uncompressedLength));
+	}
+
+	/**
+	 * Decompress the given bytes to a string.
+	 * @param compressed the bytes.
+	 * @return the bytes.
+	 */
+	public String decompressString(byte[] compressed) throws IOException {
+		if (compressed.length == 0) {
+			return "";
+		}
+		return new String(decompress(compressed));
+	}
+
+	/**
+	 * Decompress the given bytes to a string.
+	 * @param compressed the bytes.
+	 * @return the bytes.
+	 */
+	public String decompressString(byte[] compressed, String charset) throws IOException {
+		if (compressed.length == 0) {
+			return "";
+		}
+		return new String(decompress(compressed), charset);
+	}
+
+	/**
+	 * Decompress the given bytes.
+	 * @param compressed the bytes.
+	 * @param uncompressedLength the uncompressed length.
+	 * @return the bytes.
+	 */
+	public synchronized byte[] decompress(byte[] compressed, int uncompressedLength) throws IOException {
+		if (uncompressedLength == 0) {
+			return new byte[0];
+		}
+		byte[] uncompressed = new byte[uncompressedLength];
+		ByteArrayInputStream bais = new ByteArrayInputStream(compressed);
+		InflaterInputStream input = newInputStream(bais);
+		input.read(uncompressed);
+		input.close();
+		return uncompressed;
+	}
+
+	/**
+	 * Decompress the given bytes.
+	 * @param compressed the bytes.
+	 * @return the bytes.
+	 * @throws IOException.
+	 */
+	public synchronized byte[] decompress(byte[] compressed) throws IOException {
+		return decompress(-1, compressed);
+	}
+
+	private static final int BYTE_ARRAY_SIZE = 10000;
+
+	/**
+	 * Decompress the given bytes. Uses a timeout. It expects timeout
+	 * is a positive integer; otherwise, it ignores it.
+	 * 
+	 * @param timeout in milliseconds.
+	 * @param webSpider
+	 * @param compressed the bytes.
+	 * @return the bytes.
+	 * @throws IOException.
+	 */
+	public synchronized byte[] decompress(int timeout, byte[] compressed) throws IOException {
+
+		if (compressed.length == 0) {
+			return new byte[0];
+		}
+
+		long timeStarted = System.currentTimeMillis();
+		ByteArrayInputStream bais = new ByteArrayInputStream(compressed);
+		BufferedInputStream input = new BufferedInputStream(newInputStream(bais));
+		ByteArrayOutputStream baos = new ByteArrayOutputStream();
+
+		byte[] tempByteArray = new byte[BYTE_ARRAY_SIZE];
+		int numBytesLastRead = input.read(tempByteArray, 0, BYTE_ARRAY_SIZE);
+
+		// Case where a valid timeout exists, check it in every iteration.
+		if (timeout > 0) {
+			while (numBytesLastRead != -1) {
+				baos.write(tempByteArray, 0, numBytesLastRead);
+				long timeTakenSoFar = System.currentTimeMillis() - timeStarted;
+				if (timeout - timeTakenSoFar <= 0) {
+					input.close();
+					baos = null;
+					QuickStatsEngine2.engine.DECOMPRESS_TIMEOUTS.logEvent(timeTakenSoFar);					
+					throw new TimeoutException("Decompression timed out (timeout: " + timeout + " ms)");
+				}
+				numBytesLastRead = input.read(tempByteArray, 0, BYTE_ARRAY_SIZE);
+			}
+		// Case where no valid timeout exists, no timeout checks.
+		} else {
+			while (numBytesLastRead != -1) {
+				baos.write(tempByteArray, 0, numBytesLastRead);
+				numBytesLastRead = input.read(tempByteArray, 0, BYTE_ARRAY_SIZE);
+			}
+		}
+		tempByteArray = null;
+
+		input.close();
+		byte[] data = baos.toByteArray();
+		baos = null;
+//		long timeFinished = System.currentTimeMillis();
+//		if (log.isDebugEnabled()) log.debug ("[Decompressed] " + compressed.length + " -> " + data.length + " bytes, (" + (timeFinished - timeStarted + " millis)"));
+		return data;
+	}
+
+	/**
+	 * Decompress the data from the given input stream to the output stream.
+	 * @param input the input (compressed data).
+	 * @param output the output (uncompressed data).
+	 */
+	public synchronized void decompress(InputStream input, OutputStream output) throws IOException {
+		input = newInputStream(input);
+		while (true) {
+			int available = input.available();
+			if (available == 0) {
+				break;
+			}
+			byte[] data = new byte[available];
+			int length = input.read(data);
+			output.write(data, 0, length);
+		}
+	}
+
+	/**
+	 * Returns a new output stream.
+	 * @param output the output.
+	 * @return a new output stream.
+	 */
+	protected DeflaterOutputStream newOutputStream(OutputStream output) throws IOException {
+		return new DeflaterOutputStream(output);
+	}
+
+	/**
+	 * Returns a new input stream.
+	 * @param input the input.
+	 * @return a new input stream.
+	 */
+	protected InflaterInputStream newInputStream(InputStream input) throws IOException {
+		return new InflaterInputStream(input);
+	}
+
+}

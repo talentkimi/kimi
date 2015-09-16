@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 68
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/loadtest
+END
+StoreRecordsTask.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/loadtest/StoreRecordsTask.java
+END
+XMLGrabber.java
+K 25
+svn:wc:ra_dav:version-url
+V 84
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/loadtest/XMLGrabber.java
+END
+FetchRecordsTask.java
+K 25
+svn:wc:ra_dav:version-url
+V 90
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/logging/loadtest/FetchRecordsTask.java
+END

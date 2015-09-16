@@ -1,0 +1,47 @@
+K 25
+svn:wc:ra_dav:version-url
+V 77
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/nioservice/exception
+END
+SelectorException.java
+K 25
+svn:wc:ra_dav:version-url
+V 100
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/nioservice/exception/SelectorException.java
+END
+ReadEOSException.java
+K 25
+svn:wc:ra_dav:version-url
+V 99
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/nioservice/exception/ReadEOSException.java
+END
+NioServiceException.java
+K 25
+svn:wc:ra_dav:version-url
+V 102
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/nioservice/exception/NioServiceException.java
+END
+ServerAcceptException.java
+K 25
+svn:wc:ra_dav:version-url
+V 104
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/nioservice/exception/ServerAcceptException.java
+END
+ClientConnectException.java
+K 25
+svn:wc:ra_dav:version-url
+V 105
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/nioservice/exception/ClientConnectException.java
+END
+WriteException.java
+K 25
+svn:wc:ra_dav:version-url
+V 97
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/nioservice/exception/WriteException.java
+END
+ReadException.java
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/nioservice/exception/ReadException.java
+END

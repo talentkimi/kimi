@@ -1,0 +1,83 @@
+K 25
+svn:wc:ra_dav:version-url
+V 61
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/text
+END
+StringParsable.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/text/StringParsable.java
+END
+SelectionOptions.java
+K 25
+svn:wc:ra_dav:version-url
+V 83
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/text/SelectionOptions.java
+END
+StringParser.java
+K 25
+svn:wc:ra_dav:version-url
+V 79
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/text/StringParser.java
+END
+SelectionException.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/text/SelectionException.java
+END
+Text.java
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/text/Text.java
+END
+Selection.java
+K 25
+svn:wc:ra_dav:version-url
+V 76
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/text/Selection.java
+END
+Utf8.java
+K 25
+svn:wc:ra_dav:version-url
+V 71
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/text/Utf8.java
+END
+StringDigestor.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/text/StringDigestor.java
+END
+StringEscaper.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/text/StringEscaper.java
+END
+StringMatcher.java
+K 25
+svn:wc:ra_dav:version-url
+V 80
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/text/StringMatcher.java
+END
+DateUtil.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/text/DateUtil.java
+END
+Charsets.java
+K 25
+svn:wc:ra_dav:version-url
+V 75
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/text/Charsets.java
+END
+FormattedTable.java
+K 25
+svn:wc:ra_dav:version-url
+V 81
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/text/FormattedTable.java
+END

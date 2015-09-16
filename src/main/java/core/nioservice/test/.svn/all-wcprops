@@ -1,0 +1,23 @@
+K 25
+svn:wc:ra_dav:version-url
+V 72
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/nioservice/test
+END
+EchoServer.java
+K 25
+svn:wc:ra_dav:version-url
+V 88
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/nioservice/test/EchoServer.java
+END
+EchoHandlerManager.java
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/nioservice/test/EchoHandlerManager.java
+END
+EchoHandler.java
+K 25
+svn:wc:ra_dav:version-url
+V 89
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/nioservice/test/EchoHandler.java
+END

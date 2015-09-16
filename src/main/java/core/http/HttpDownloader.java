@@ -1,0 +1,783 @@
+package core.http;
+
+import java.io.ByteArrayInputStream;
+import java.io.IOException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import core.http.browser.HttpBrowser;
+import core.http.browser.HttpBrowserFactory;
+import core.http.exception.HttpBadRequestException;
+import core.http.request.HttpRequest;
+import core.http.response.HttpCode;
+import core.http.response.HttpResponse;
+import core.http.response.HttpResponseCodeList;
+import core.io.ConnectTimeoutException;
+import core.io.DownloadTimeoutException;
+import core.io.ProxyServerSideException;
+import core.io.StreamReader;
+import core.net.HttpsProtocol;
+import core.net.NetSocket;
+import core.net.NetUrl;
+import core.text.Charsets;
+import core.util.WatchDog;
+import engine.WebSpider;
+
+/**
+ * An HTTP Downloader.
+ */
+public final class HttpDownloader {
+
+	private static final Logger log = LoggerFactory.getLogger(HttpDownloader.class);
+	public static final int CONNECTION_TIMEOUT = 5000;
+	
+	/** The time to download. */
+	private long timeToDownload = -1;
+	/** The number of connect retries. */
+	private final int connectRetries;
+	/** The socket */
+	private NetSocket socket = null;
+	/** The HTTP request. */
+	private HttpRequest request = null;
+	/** The HTTP response. */
+	private HttpResponse response = null;
+	/** The HTTP browser. */
+	private HttpBrowser browser = HttpBrowserFactory.getDefault().getBrowser();
+	/** The proxy URL. */
+	private NetUrl proxyUrl = null;
+	/** The php proxy URL. */
+	private NetUrl phpProxyUrl = null;
+	/** The php proxy request headers that needs to be copied from the original request */
+	private final static String[] phpProxyHeaders = {"User-Agent", "Accept", "Accept-Language", "Accept-Encoding", "Accept-Charset", "Cache-Control", "Content-Type", "Content-Length"};
+	/** The php proxy header request prefix * */
+	private final static String phpProxyHeaderPrefix = "PTunnel-";
+	/** The php proxy header request url * */
+	private final static String phpProxyHeaderUrl = "PTunnelUrl";
+	/** The bytes sent. */
+	private long bytesSent = 0;
+	/** The bytes received. */
+	private long bytesReceived = 0;
+	/** The number of downloads. */
+	private long numberOfDownloads = 0;
+	private long durationOfDownloads = 0;
+	/** The maximum refresh seconds. */
+	private int maximumRefreshSeconds = 5;
+	/** Indicates if this is a non-blocking request. */
+	private boolean i_isNonBlocking = false;
+	/** The WebSpider that created this Downloader. */
+	private WebSpider i_spider;
+	/** The supplier name used by proxy cloud solution for gathering statistics */
+	private String proxyCloudSupplier = null;
+	/** the supplier proxy instance usage pool, if such available */
+	/** Indicates whether the download is in progress */
+	private boolean downloadInProgress = false;
+	/** List of custom defined HTTP headers that will be applied to the HTTP Requests this instance do */
+	private HttpHeaderList headerList = null;
+
+	/**
+	 * Sets the custom defined HTTP headers to this instance
+	 * @param headers
+	 */
+	public void setHttpHeaderList(HttpHeaderList headers) {
+		this.headerList = headers;
+	}
+
+	/**
+	 * Configures the custom defined HTTP headers in the given HTTP request
+	 * @param request
+	 */
+	public void setHttpHeaders(HttpRequest request) {
+		HttpHeaderList headers = headerList;
+		if (request == null || headers == null) {
+			return;
+		}
+		final int count = headers.size();
+		for (int x = 0; x < count; x++) {
+			HttpHeader header = headers.getHeader(x);
+			request.setHeader(header.getName(), header.getValue());
+		}
+	}
+
+	/**
+	 * Configures the proxy cloud request
+	 * @param pool
+	 * @param supplier
+	 * @throws NullPointerException
+	 */
+//	public void setProxyCloudRequest(UsagePool pool, String supplier) throws NullPointerException {
+//		if (supplier == null) {
+//			throw new NullPointerException();
+//		}
+//		proxyCloudUsagePool = pool;
+//		proxyCloudSupplier = supplier;
+//	}
+
+	/**
+	 * is download in progress
+	 * @return true if download is in progress
+	 */
+	public boolean isDownloadInProgress() {
+		return downloadInProgress;
+	}
+
+	/**
+	 * set maximum http refresh time in seconds
+	 * @param maximumRefreshSeconds
+	 */
+	public void setMaximumRefreshSeconds(int maximumRefreshSeconds) {
+		if (maximumRefreshSeconds < 0) {
+			throw new IllegalArgumentException("maximumRefreshSeconds=" + maximumRefreshSeconds);
+		}
+		this.maximumRefreshSeconds = maximumRefreshSeconds;
+	}
+
+	/**
+	 * Creates a new downloader.
+	 * @param retries the number of retries.
+	 */
+	public HttpDownloader(int retries, WebSpider p_spider) {
+		i_spider = p_spider;
+		if (retries < 0) {
+			throw new IllegalArgumentException("retries=" + retries);
+		}
+		this.connectRetries = retries;
+	}
+
+	/**
+	 * Creates a new downloader.
+	 */
+	public HttpDownloader() {
+		this(0, null);
+	}
+
+	/**
+	 * set download had timed out
+	 */
+	public void setDownloadTimedOut() {
+		if (socket != null) {
+			try {
+				socket.getReader().setStreamTimedOut();
+			} catch (Throwable t) {
+				if (log.isErrorEnabled()) {
+					if (log.isErrorEnabled()) log.error("Unable to force stream to time out", t);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Returns the browser.
+	 * @return the browser.
+	 */
+	public HttpBrowser getBrowser() {
+		return browser;
+	}
+
+	/**
+	 * Returns the request.
+	 * @return the request.
+	 */
+	public HttpRequest getRequest() {
+		return request;
+	}
+
+	/**
+	 * Returns the response.
+	 * @return the response.
+	 */
+	public HttpResponse getResponse() {
+		return response;
+	}
+
+	/**
+	 * Returns the response.
+	 * @return the response.
+	 */
+	public NetUrl getProxyUrl() {
+		return proxyUrl;
+	}
+
+	/**
+	 * clear proxy url
+	 */
+	public void clearProxyUrl() {
+		this.proxyUrl = null;
+	}
+
+	/**
+	 * get php proxy url
+	 * @return php proxy url
+	 */
+	public NetUrl getPHPProxyUrl() {
+		return phpProxyUrl;
+	}
+
+	/**
+	 * clear php proxy url
+	 */
+	public void clearPHPProxyUrl() {
+		this.phpProxyUrl = null;
+	}
+
+	/**
+	 * Sets the proxy URL.
+	 * @param url the URL.
+	 */
+	public void setProxyUrl(NetUrl url) {
+		if (url == null) {
+			throw new NullPointerException();
+		}
+		if (url.getHost() == null) {
+			throw new IllegalArgumentException("url does not contain a host: \"" + url + "\"");
+		}
+		if (url.getPort() == -1) {
+			throw new IllegalArgumentException("url does not contain a port: \"" + url + "\"");
+		}
+		this.proxyUrl = url;
+		validateProxyRequest();
+	}
+
+	/**
+	 * Sets the php proxy URL.
+	 * @param url the URL.
+	 */
+	public void setPHPProxyUrl(NetUrl url) {
+		if (url == null) {
+			throw new NullPointerException();
+		}
+		if (url.getProtocol() == null) {
+			throw new IllegalArgumentException("url does not contain a protocol: \"" + url + "\"");
+		}
+		if (url.getHost() == null) {
+			throw new IllegalArgumentException("url does not contain a host: \"" + url + "\"");
+		}
+		if (url.getPort() == -1) {
+			throw new IllegalArgumentException("url does not contain a port: \"" + url + "\"");
+		}
+		this.phpProxyUrl = url;
+		validateProxyRequest();
+	}
+
+	/**
+	 * validate proxy request
+	 */
+	private final void validateProxyRequest() {
+		if (proxyUrl != null && phpProxyUrl != null) {
+			throw new IllegalArgumentException("You can set either an standard proxy, either an php proxy, not both at the same time");
+		}
+	}
+
+	/**
+	 * Returns true if this downloader contains a request.
+	 * @return true if this downloader contains a request.
+	 */
+	public boolean hasARequest() {
+		return request != null;
+	}
+
+	/**
+	 * Returns true if this downloader contains a response.
+	 * @return true if this downloader contains a response.
+	 */
+	public boolean hasAResponse() {
+		return response != null;
+	}
+
+	/**
+	 * Sets the HTTP request and resets the response.
+	 * @param request the request.
+	 */
+	public void setRequest(HttpRequest request) {
+		if (request == null) throw new NullPointerException();
+		this.request = request;
+		this.response = null;
+	}
+
+	/**
+	 * Sets the HTTP response.
+	 * @param response the response to set.
+	 */
+	public void setResponse(HttpResponse response) {
+		if (response == null) throw new NullPointerException();
+		this.response = response;
+	}
+
+	/** Sets a flag to indicate that this is a non-blocking request. */
+	public void setNonBlocking() {
+		i_isNonBlocking = true;
+	}
+
+	/** 
+	 * Sets a flag to indicate that this is a blocking request - used by 
+	 * extractAirportMap methods to override non-blocking status where necessary.
+	 */
+	public void setBlocking()
+	{
+		i_isNonBlocking = false;
+	}
+	
+	/**
+	 * Returns the time to download.
+	 * @return the time to download.
+	 */
+	public long getTimeToDownload() {
+		return timeToDownload;
+	}
+
+	/**
+	 * generate php proxy request
+	 * @param request
+	 * @throws Exception
+	 */
+	private final HttpRequest generatePHPProxyRequest(HttpRequest request) {
+		if (request == null) {
+			throw new NullPointerException();
+		}
+		request.getUrl().getNetUrl().setAbsolute(true); // Well let verify it again ...
+
+		// To make sure the connection between PHP proxy and C5 is secure when we require ssl
+		// connection to supplier.
+		if (isPHPProxyRequest() && (request.getUrl().getNetUrl().getProtocol().equals("https") || request.getUrl().getNetUrl().getPort() == 443)) {
+			phpProxyUrl.setProtocol("https");
+		}
+
+		HttpRequest phpRequest = new HttpRequest(request.getMethod().toString(), phpProxyUrl.toString(false, true));
+		phpRequest.setHeader("Host", phpProxyUrl.getHost());
+		HttpHeaderList requestHeaders = request.getHeaderList();
+		for (String phpHeader : phpProxyHeaders) {
+			HttpHeader httpHeader = requestHeaders.getHeader(phpHeader);
+			if (httpHeader != null) {
+				phpRequest.setHeader(httpHeader.getName(), httpHeader.getValue());
+			}
+		}
+		int headersCount = requestHeaders.size();
+		for (int x = 0; x < headersCount; x++) {
+			HttpHeader httpHeader = requestHeaders.getHeader(x);
+			phpRequest.setHeader(phpProxyHeaderPrefix + httpHeader.getName(), httpHeader.getValue());
+		}
+		phpRequest.setHeader(phpProxyHeaderUrl, request.getUrl().getNetUrl().toString(true, true));
+		phpRequest.getContent().set(request.getContent().toByteArray());
+		phpRequest.getContent().setCharset(request.getContent().getCharset());
+		if (log.isDebugEnabled()) {
+			if (log.isDebugEnabled()) log.debug("[PHP Proxy Request]\n{}", phpRequest.toString(true));
+		}
+		return phpRequest;
+	}
+
+	/**
+	 * handle php proxy response
+	 * @param in
+	 * @return the response of the request made via the php proxy
+	 */
+	private final HttpResponse handlePHPProxyResponse(StreamReader in) throws IOException {
+		if (in == null) {
+			throw new NullPointerException();
+		}
+		HttpResponse phpResponse = new HttpResponse();
+		phpResponse.readFrom(in, "HttpDownloader.handlePHPProxyResponse - phpResponse: " + (i_spider == null? "null": i_spider.getSpiderName()));
+		if (log.isDebugEnabled()) {
+			if (log.isDebugEnabled()) log.debug("[PHP Proxy Response]\n{}", phpResponse.toString(false));
+		}
+		if (i_spider != null) {
+			i_spider.addBytesReceived(phpResponse.bytes());
+		} else {
+			bytesReceived += phpResponse.bytes();
+		}
+		if (phpResponse.getCode().equals(HttpCode.CODE_503)) {
+			// If there was an issue detected by the php proxy side it returns "HTTP/1.0 503
+			// [description message]"
+			if (log.isDebugEnabled()) {
+				if (log.isErrorEnabled()) log.error("[PHP Proxy Response] Detected internal php failure");
+			}
+			return phpResponse;
+		}
+		HttpResponse response = new HttpResponse();
+		response.readFrom(new StreamReader(new ByteArrayInputStream(phpResponse.getContent().toByteArray())), "HttpDownloader.handlePHPProxyResponse - response: " + (i_spider == null? "null": i_spider.getSpiderName()));
+		return response;
+	}
+
+	/**
+	 * Configures Proxy Cloud request
+	 * @param request
+	 * @param downloadTimeout timeout (millis)
+	 * @throws NullPointerException
+	 */
+	private final void setProxyCloudRequestConfiguration(HttpRequest request, int downloadTimeout) throws NullPointerException {
+		if (request == null) {
+			throw new NullPointerException();
+		}
+		if (proxyCloudSupplier != null) {
+			if (log.isDebugEnabled()) {
+				log.debug("[Proxy Cloud Request Settings] " + downloadTimeout + " millis");
+			}
+			request.setHeader("X-SupplierName", proxyCloudSupplier);
+			if (downloadTimeout > 0) {
+				request.setHeader("X-ReadTimeout", downloadTimeout);
+				request.setHeader("X-DownloadTimeout", downloadTimeout);
+			}
+			try {
+			} catch (Throwable throwable) {
+				if (log.isErrorEnabled()) {
+					log.error("[ProxyCloud QS] Unable to register proxy instance hits", throwable);
+				}
+			}
+		}
+	}
+
+	/**
+	 * Verifies the proxy response for any error related information that could have been bounced
+	 * back and throws {@link ProxyServerSideException} if such found
+	 * @param response
+	 * @throws ProxyServerSideException
+	 */
+	public final static void assertProxyResponse(HttpResponse response) throws ProxyServerSideException {
+		if (response == null || response.getCode() == null || response.getHeaderList() == null) {
+			return;
+		}
+		Integer code = response.getCode().getInteger();
+		HttpHeaderList headers = response.getHeaderList();
+		if (code.equals(HttpResponseCodeList.CODE_500) 
+				&& headers.contains("TF-Proxy-Exception") 
+				&& Boolean.parseBoolean(headers.getHeader("TF-Proxy-Exception").getValue())
+				&& headers.contains("TF-Throwable-Message") 
+				&& headers.contains("TF-Throwable-Class")) {
+			String message = headers.getHeader("TF-Throwable-Message").getValue();
+			String className = headers.getHeader("TF-Throwable-Class").getValue();
+			className = className.substring(className.lastIndexOf(".") + 1);
+			throw new ProxyServerSideException(className + ":" + message);
+		}
+	}
+
+	/**
+	 * Downloads an returns the response to the given request.
+	 * @param request the request.
+	 * @param downloadTimeout the timeout (millis) to read the response.
+	 * @param connectRetries the number of connect retries.
+	 */
+	private final HttpResponse download(HttpRequest request, int connectRetries, int downloadTimeout, HttpsProtocol[] protocols) throws IOException, HttpBadRequestException {
+		if (request == null) {
+			throw new HttpBadRequestException("request not set");
+		}
+		
+		if (downloadTimeout <= 0) {
+			IllegalArgumentException ex = new IllegalArgumentException("downloadTimeout should be greater then 0");
+			if (log.isErrorEnabled()) {
+				log.error("Illegal Argument" , ex);
+			}
+			throw ex;
+		}
+		
+		if (i_isNonBlocking) {
+			// Re-use the various download methods to set up the request on the downloader
+			// and then carry out the actual download via a channel in the non-blocking 
+			// thread. We will return an empty response which we endeavour to populate 
+			// correctly elsewhere after we have carried out the download. 
+			if (log.isDebugEnabled()) log.debug("Non-blocking request in HttpDownloader");
+			// Mimic proxy logic.
+			if (isProxyRequest()) {
+				request.addHeader("X-TFRequest", "true");
+			}
+			setProxyCloudRequestConfiguration(request, downloadTimeout);
+			return new HttpResponse();
+		}
+
+		// URL
+		NetUrl requestUrl = request.getUrl().getNetUrl();
+		NetUrl url;
+		if (isProxyRequest()) {
+			url = proxyUrl;
+			requestUrl.setAbsolute(true);
+		} else if (isPHPProxyRequest()) {
+			url = phpProxyUrl;
+			requestUrl.setAbsolute(true);
+		} else {
+			url = requestUrl;
+			// IMPORTANT: This should be ok, but is it?
+			requestUrl.setAbsolute(false);
+		}
+
+		// Host
+		String host = url.getHost();
+		if (host == null) {
+			throw new HttpBadRequestException("Missing host in URL: \"" + url.toString(true) + "\"");
+		}
+
+		// Port
+		int port = url.getPort();
+		boolean secure = (port == 443);
+		if (port == -1) {
+			throw new HttpBadRequestException("Missing port in URL: \"" + url.toString(true) + "\"");
+		}
+		if ("https".equals(url.getProtocol())) {
+			secure = true;
+			if (port == 80) {
+				port = 443;
+			}
+		}
+
+		// To make sure the connection between PHP proxy and C5 is secure when we require ssl
+		// connection to supplier.
+		if (isPHPProxyRequest() && (request.getUrl().getNetUrl().getProtocol().equals("https") || request.getUrl().getNetUrl().getPort() == 443)) {
+			secure = true;
+			port = 443;
+		}
+		long timeStarted = System.currentTimeMillis();
+		WatchDog.Info watchinfo = null;
+		try {
+			downloadInProgress = true;
+			// Normal Connect
+			int connectionTimout = Math.min(downloadTimeout, CONNECTION_TIMEOUT);
+			socket = new NetSocket(host, port, secure, connectionTimout, protocols);
+			int restTime = (int) (downloadTimeout - System.currentTimeMillis() + timeStarted);
+			if (restTime <= 0) {
+				throw new ConnectTimeoutException("Establishing connection took too long than expected [" + downloadTimeout + " millis]");
+			}
+			watchinfo = WatchDog.watch(restTime, false, socket);
+			socket.setReadTimeout(restTime);
+			socket.setCharset(Charsets.HTTP);
+			socket.getReader().setStreamTimeout(restTime);
+
+			// Proxy Connect
+			if (isProxyRequest()) {
+				if ("https".equals(requestUrl.getProtocol())) {
+					HttpRequest connectRequest = getConnectRequest(requestUrl.getHost(), 443);
+					connectRequest.addHeader("X-TFRequest", "true");
+					setProxyCloudRequestConfiguration(connectRequest, restTime);
+					getBrowser().setHeaders(connectRequest);
+					setHttpHeaders(connectRequest);
+					if (log.isDebugEnabled() && proxyCloudSupplier != null) {
+						log.debug("[Proxy Cloud Request]\n" + connectRequest.toString(false));
+					}
+					connectRequest.writeTo(socket.getWriter());
+					if (i_spider != null) {
+						i_spider.addBytesSent(connectRequest.bytes());
+					} else {
+						bytesSent += connectRequest.bytes();
+					}
+					HttpResponse connectResponse = new HttpResponse();
+					connectResponse.readFrom(socket.getReader(), "HttpDownloader - connectResponse: " + (i_spider == null? "null": i_spider.getSpiderName()));
+					if (i_spider != null) {
+						i_spider.addBytesReceived(connectResponse.bytes());
+					} else {
+						bytesReceived += connectResponse.bytes();
+					}
+					assertProxyResponse(connectResponse);
+					socket = socket.toSecureSocket(requestUrl.getHost(), 443);
+					socket.setReadTimeout(restTime);
+					socket.getReader().setStreamTimeout(restTime);
+					requestUrl.setAbsolute(false);
+				} else {
+					request.addHeader("X-TFRequest", "true");
+					setProxyCloudRequestConfiguration(request, restTime);
+				}
+			}
+
+			// Send Request, Read Response
+			// if (log.isDebugEnabled()) log.debug ("[Http Request]", request);
+			if (isPHPProxyRequest()) {
+				HttpRequest phpRequest = generatePHPProxyRequest(request);
+				phpRequest.writeTo(socket.getWriter());
+				if (i_spider != null) {
+					i_spider.addBytesSent(phpRequest.bytes());
+				} else {
+					bytesSent += phpRequest.bytes();
+				}
+			} else {
+				if (log.isDebugEnabled() && proxyCloudSupplier != null && !"https".equals(requestUrl.getProtocol())) {
+					log.debug("[Proxy Cloud Request]\n" + request.toString(false));
+				}
+				request.writeTo(socket.getWriter());
+				if (i_spider != null) {
+					i_spider.addBytesSent(request.bytes());
+				} else {
+					bytesSent += request.bytes();
+				}
+			}
+			HttpResponse response = new HttpResponse();
+			if (isPHPProxyRequest()) {
+				response = handlePHPProxyResponse(socket.getReader());
+			} else {
+				response.readFrom(socket.getReader(), "HttpDownloader - response: " + (i_spider == null? "null": i_spider.getSpiderName()));
+				if (i_spider != null) {
+					i_spider.addBytesReceived(response.bytes());
+				} else {
+					bytesReceived += response.bytes();
+				}
+				if (isProxyRequest()) {
+					assertProxyResponse(response);
+				}
+			}
+			// if (log.isDebugEnabled()) log.debug ("[Http Response]", response);
+			HttpHeader header = response.getHeaderList().getHeader(HttpResponse.HEADER_CONTENT_TYPE);
+			if (header != null) {
+				String contentType = header.getValue().toLowerCase();
+				int indexBegin = contentType.indexOf("charset=");
+				if (indexBegin != -1) {
+					indexBegin += 8;
+					int indexEnd = contentType.indexOf(';', indexBegin);
+					if (indexEnd == -1) {
+						indexEnd = contentType.length();
+					}
+					String charset = contentType.substring(indexBegin, indexEnd);
+					response.getContent().setCharset(charset);
+				}
+			}
+			downloadInProgress = false;
+			return response;
+		} catch (IOException ioe) {
+			if (watchinfo != null && watchinfo.isTimedOut()) {
+				throw new DownloadTimeoutException("Watchdog terminated thread", ioe);
+			}
+			throw ioe;
+		} finally {
+			if (watchinfo != null) {
+				watchinfo.cancel();
+			}
+			long downloadTime = System.currentTimeMillis() - timeStarted;
+			this.timeToDownload = downloadTime;
+			if (i_spider != null) {
+				i_spider.addDownloadTime(downloadTime);
+				i_spider.addDownload();
+			} else {
+				numberOfDownloads++;
+				durationOfDownloads += downloadTime;
+			}
+			if (socket != null) {
+				socket.close();
+			}
+			socket = null;
+		}
+	}
+
+	/**
+	 * Returns the connect request.
+	 * @param host the host.
+	 * @param port the port.
+	 * @return the connect request.
+	 */
+	private HttpRequest getConnectRequest(String host, int port) {
+		String url = host + ':' + port;
+		HttpRequest connectRequest = new HttpRequest(HttpRequest.METHOD_CONNECT, url);
+		return connectRequest;
+	}
+
+	/**
+	 * Returns true if this is a proxy request.
+	 * @return true if this is a proxy request.
+	 */
+	public boolean isProxyRequest() {
+		return proxyUrl != null;
+	}
+
+	/**
+	 * is php proxy request
+	 * @return true if its php proxy request.
+	 */
+	public boolean isPHPProxyRequest() {
+		return phpProxyUrl != null;
+	}
+
+	/**
+	 * Downloads the response to the stored request.
+	 * @param downloadTimeout the timeout (millis) to read the response.
+	 */
+	public void download(int downloadTimeout, HttpsProtocol[] protocols) throws IOException, HttpBadRequestException {
+		this.response = download(request, connectRetries, downloadTimeout, protocols);
+	}
+
+	/**
+	 * Returns true if the response is a redirect.
+	 * @return true if the response is a redirect.
+	 */
+	public boolean isRedirectResponse() {
+		if (!hasAResponse()) {
+			return false;
+		}
+		if (getResponse().getHeaderList().getHeader(HttpResponse.HEADER_LOCATION) != null) {
+			return true;
+		}
+		if (getResponse().getHeaderList().getHeader(HttpResponse.HEADER_REFRESH) != null) {
+			return true;
+		}
+		return false;
+	}
+
+	/**
+	 * Returns the request to redirect the response to.
+	 * @param cookieList the cookie list.
+	 * @return the request to redirect.
+	 */
+	public HttpRequest getRedirectRequest(HttpCookieList cookieList) {
+		String urlString = null;
+		HttpHeader location = getResponse().getHeaderList().getHeader(HttpResponse.HEADER_LOCATION);
+		if (location == null) {
+			HttpHeader refresh = getResponse().getHeaderList().getHeader(HttpResponse.HEADER_REFRESH);
+			String value = refresh.getValue();
+
+			// Seconds
+			int indexSemi = value.indexOf(';');
+			String secondsString = value.substring(0, indexSemi).trim();
+			try {
+				int seconds = Integer.parseInt(secondsString);
+				if (seconds > maximumRefreshSeconds) {
+					seconds = maximumRefreshSeconds;
+				}
+				if (seconds > 0) {
+					if (log.isDebugEnabled()) log.debug("[HTTP Refresh] sleeping " + seconds + " seconds (" + value + ")");
+					Thread.sleep(seconds * 1000);
+				}
+			} catch (NumberFormatException e) {
+				if (log.isErrorEnabled()) log.error("Error parsing header refresh sleep time", e);
+			} catch (InterruptedException e) {
+				if (log.isErrorEnabled()) log.error("Recieved interupt", e);
+			}
+
+			// URL
+			int indexUrl = value.toLowerCase().indexOf("url=");
+			urlString = value.substring(indexUrl + 4, value.length()).trim();
+		} else {
+			urlString = location.getValue();
+		}
+		NetUrl url = new NetUrl(urlString);
+		if (url.getProtocol() == null) {
+			url.setFrom(getRequest().getUrl().getNetUrl());
+		}
+		HttpRequest redirect = new HttpRequest(HttpRequest.METHOD_GET, url.toString(true));
+		browser.setHeaders(redirect);
+		setHttpHeaders(redirect);
+		if (cookieList != null) {
+			cookieList.setCookiesIn(redirect);
+		}
+		return redirect;
+	}
+
+	/**
+	 * Returns the bytes received.
+	 * @return the bytes received.
+	 */
+	public final long getBytesReceivied() {
+		return bytesReceived;
+	}
+
+	/**
+	 * Returns the bytes sent.
+	 * @return the bytes sent.
+	 */
+	public final long getBytesSent() {
+		return bytesSent;
+	}
+
+	/**
+	 * Returns the number of downloads done by this downloader so far.
+	 * @return the number of downloads done.
+	 */
+	public final long getNumberOfDownloads() {
+		return numberOfDownloads;
+	}
+
+	public final long getTotalDurationOfDownloads() {
+		return durationOfDownloads;
+	}
+
+}

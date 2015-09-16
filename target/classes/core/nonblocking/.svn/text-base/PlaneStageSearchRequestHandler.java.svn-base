@@ -1,0 +1,1017 @@
+package core.nonblocking;
+
+import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.net.ConnectException;
+import java.net.InetSocketAddress;
+import java.net.SocketTimeoutException;
+import java.nio.ByteBuffer;
+import java.nio.CharBuffer;
+import java.nio.channels.ClosedChannelException;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.SocketChannel;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CharsetEncoder;
+import java.util.Iterator;
+import java.util.Vector;
+
+import model.error.ErrorCodeException;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import project.tripplanner.tools.stats.QuickStats2.QuickStatsEngine2;
+import project.tripplanner.tools.stats.QuickStats2.ScheduledQuickStatsLogger;
+import core.html.HtmlFormReader;
+import core.http.HttpDownloader;
+import core.http.HttpHeader;
+import core.http.HttpHeaderList;
+import core.http.HttpQuery;
+import core.http.HttpVersionList;
+import core.http.exception.HttpBadRequestException;
+import core.http.exception.HttpException;
+import core.http.request.HttpRequest;
+import core.http.request.HttpRequestHeaderList;
+import core.http.response.HttpResponse;
+import core.http.response.HttpResponseHeaderList;
+import core.io.Gzip;
+import core.io.StageTimeoutException;
+import core.io.StreamReader;
+import core.io.TimeoutException;
+import core.net.NetUrl;
+import engine.webspider.stage.plane.search.PlaneStageSearch;
+import engine.webspider.stage.plane.search.PlaneStageSearchLogRecord;
+
+/**
+ * Implements non-blocking I/O for PlaneStageSearch objects. Search objects implement non-blocking
+ * I/O by using this class as the superclass instead of PlaneStageSearch and following the template
+ * instructions in the Development Portal.
+ */
+public abstract class PlaneStageSearchRequestHandler extends PlaneStageSearch implements NonBlockingRequestHandler {
+
+	// Various objects required to handle non-blocking I/O.
+	private SocketChannel i_channel;
+	private Charset i_charset;
+	private CharsetDecoder i_decoder;
+	private CharsetEncoder i_encoder;
+	private ByteBuffer i_byteBuffer;
+	private int i_rawDataBytes = 0;
+	private Vector<ByteBuffer> i_rawData = new Vector<ByteBuffer>();
+	/** A container keeping the last set of bytes received through the channel */
+	private final byte[] rawDataLastBuffer = new byte[4];
+	/**
+	 * The data raw max length calculated based on the response content size and the HTTP protocol
+	 * structure size<br />
+	 * Possible values it might have:<br />
+	 * <ul>
+	 * <li><code>-1</code> - The data size we need to process is yet unknown</li>
+	 * <li><code>-2</code> - Unable to obtain the data length due to an error</li>
+	 * <li><code>-3</code> - Raw data length is undefined</li>
+	 * <li><code>0</code> - The response is chunk encoded and therefore the length can't be
+	 * calculated</li>
+	 * <li><code>>0</code> - The size of the data we need to retrieve/process</li>
+	 * </ul>
+	 */
+	private long rawDataMaxLength = -1;
+	/** the raw data index after which the HTTP body content starts */
+	private long rawDataHTTPBodyIndex = -1;
+	/** The thread that controls this search request. */
+	private NonBlockingRequestThread i_manager;
+
+	/** The "read timeout" - actually the socket timeout - used in the download. 
+	 * Default 30 seconds value is defined for a proper checking for a timeout in the checkForTimeout-method.
+	 * */
+	private int i_socketTimeout = 30000;
+
+	// Various objects used to handle timing of work on this request and overall elapsed
+	// time. Used to generate statistics for fine-tuning config.
+
+	/** Used to measure any latency prior to starting to process the request. */
+	private long i_requestAddedTime = 0;
+
+	/** Stores the time that the search request started. */
+	private long i_searchStartTime;
+
+	/** The number of different connections required to complete the search. */
+	private int i_noOfConnections = 0;
+
+	/** Stores the overall time that the thread has been actively engaged on this search. */
+	private long i_executionTime = 0;
+
+	/** Stores the last time the thread started working on this search. */
+	private long i_executionStarted;
+
+	/** Used to timeout slow supplier responses. */
+	private long i_timeoutDeadline;
+
+	/** Used to measure the amount of time spent downloading. */
+	private long i_downloadStarted;
+
+	/** Used to measure the amount of time spent connecting to the suppliers website. */
+	private long i_connectionStarted;
+
+	// For prototype we need to use a set of flags to indicate which stage in the business
+	// logic we have reached. Horrible but currently necessary since business logic and
+	// I/O handling have not been adequately separated in the web spiders.
+
+	/** Indicates whether the visitHomePage download is complete. */
+	private boolean i_initialRequestComplete = false;
+
+	/** Set by the Search class to indicate that all I/O operations are complete. */
+	private boolean i_isDownloadingComplete = false;
+
+	/** Indicates whether HtmlFormList needs to be reloaded from the response. */
+	private boolean i_reloadFormList = true;
+
+	/** Indicates which getResultsx method is next to call. Nice. */
+	private int i_methodNumber = 1;
+
+	/** Indicates how many levels of redirection we have gone through. */
+	private int i_redirects = 0;
+
+	/** Indicates whether the request waiting to be sent is a redirect. */
+	private boolean i_isRedirect = false;
+
+	/** The c_log4j c_logger. */
+	private static final Logger c_log = LoggerFactory.getLogger(PlaneStageSearchRequestHandler.class);
+
+	/**
+	 * Creates a new PlaneStageSearchRequestHandler.
+	 */
+	public PlaneStageSearchRequestHandler()
+	{
+		super();
+	}
+
+	/**
+	 * Requests persistent connection from the supplier system. <b>Be sure supplier does support
+	 * pure HTTP/1.1</b>
+	 * @return true if persistent connections are allowed, otherwise {@code false}
+	 */
+	protected boolean usePersistentConnections() {
+		return false;
+	}
+
+	/**
+	 * Does the equivalent of the finally block in the runStage method plus a bit of additional
+	 * tidying up for the channel and request.
+	 */
+	public void finishRequest() throws Exception
+	{	
+		try
+		{
+			// Close channel and remove request from manager, assuming that we got as
+			// far as creating these objects in the first place.
+			if (i_channel != null)
+			{
+				i_channel.close();
+			}
+			if (c_log.isDebugEnabled()) c_log.debug("finishRequest(): Closed channel.");
+
+			if (i_manager != null)
+			{
+				i_manager.removeRequest();
+			}
+
+			closeSelection();
+			closeDownloader();
+			closeHtmlForm();
+			clean();
+			cacheMap.clear();
+			compressHtmlFormList();
+			compressHttpCookieList();
+
+			saveToCache();
+			cacheNoResultsDetail();
+			handleResponse(new PlaneStageSearchLogRecord(getClass().getSimpleName()));
+			getSearchResponse().getModeResponse().getComplete().set(true);
+			logRouterSuccess();
+			closeHtmlFormList();
+			closeSelection();
+		} finally {
+			this.complete();
+			stopTimer();
+			// Log the stats for the whole search.
+			if (ScheduledQuickStatsLogger.quickStatsLoggingIsEnabled) {
+				long timeTaken = System.currentTimeMillis() - i_requestAddedTime;
+				logBandwidthUsageAndStageTimes(i_searchStartTime);
+				String name = "NIO:" + getClass().getSimpleName();
+				QuickStatsEngine2.engine.THREAD_OPERATION_PROCESSING_TIMES.logEvent(new String[] {name}, timeTaken);
+			}
+			closeDownloader();
+			closeSelection();
+
+			if (c_log.isDebugEnabled())
+			{
+				StringBuffer l_sb = new StringBuffer();
+				l_sb.append("\n[Class name = " + this.getClass().getSimpleName() + "]\n");
+				l_sb.append("[Success = " + !this.hasCrashed() + "]\n");
+				l_sb.append("[Elapsed time = " + (System.currentTimeMillis() - i_searchStartTime) + "]\n");
+				l_sb.append("[Execution time = " + i_executionTime + "]\n");
+				l_sb.append("[Number of connections = " + i_noOfConnections + "]\n");
+				l_sb.append("[Number of downloads = " + totalNumberOfDownloads + "]\n");
+				l_sb.append("[Duration of downloads = " + totalDurationOfDownloads + "]\n");
+				l_sb.append("[Total bytes sent = " + totalBytesSent + "]\n");
+				l_sb.append("[Total bytes received = " + totalBytesReceived + "]\n");
+				l_sb.append("[Total GZIP time = " + totalGZipTime + "]");
+				if (c_log.isDebugEnabled()) c_log.debug(l_sb.toString());
+			}
+		}
+	}
+
+	/**
+	 * Call the task.setThrowable method - this is used elsewhere to indicate that a router has
+	 * crashed, and yes, this is a rubbish way of doing things.
+	 */
+	public void setThrowableOnTask(Throwable p_throwable)
+	{
+		setThrowable(p_throwable);
+	}
+
+	/**
+	 * Checks to see whether a read or connection timeout has occurred and takes appropriate action.
+	 */
+	public void checkForTimeout()
+	{
+		long cur = System.currentTimeMillis(); 
+		if ((cur > i_timeoutDeadline) || (i_channel.isConnectionPending() && cur - i_connectionStarted > HttpDownloader.CONNECTION_TIMEOUT))
+		{
+			// Use equivalent exceptions to those thrown if the same events occur on
+			// sockets in the downloader.
+			if (i_channel.isConnected())
+			{
+				setThrowable(new SocketTimeoutException());
+			} else {
+				setThrowable(new ConnectException());
+			}
+
+			try {
+				finishRequest();
+			} catch (Exception l_e) {
+				// Catch and log any error here but don't throw it, we've already set
+				// a timeout exception on the search.
+				if (c_log.isErrorEnabled()) c_log.error(l_e.getMessage(), l_e);
+			}
+		}
+	}
+
+	/** Used by the ManagerThread to kick off the request */
+	public void startRequest() throws Throwable
+	{
+		if (c_log.isDebugEnabled()) c_log.debug("entering startRequest()");
+
+		// This is the start of a new search - carry out initialisation logic.
+		if (!i_initialRequestComplete)
+		{
+			i_searchStartTime = System.currentTimeMillis();
+			setTimeStarted(i_searchStartTime);
+			this.getConfig().runStage();
+			setProxies();
+			checkTravellers();
+			if (!travellerTypeCheck(this, getConfig().getParameterType(CHILDREN_AND_INFANTS_SEARCH, null).isSupported()))
+			{
+				error(SEARCH_TRAVELLER_TYPE_NOT_SUPPORTED);
+			}
+		}
+
+		// Set up the various objects required for non-blocking socket I/O and initiate
+		// connection to the supplier server.
+		try {
+			i_charset = Charset.forName("ISO-8859-1");
+			i_decoder = i_charset.newDecoder();
+			i_encoder = i_charset.newEncoder();
+			i_byteBuffer = ByteBuffer.allocate(1024);
+			i_channel = SocketChannel.open();
+			i_channel.configureBlocking(false);
+
+			// Work out the deadline for the downloading to finish based on the timeout (from the system variables).
+			i_timeoutDeadline = System.currentTimeMillis() + i_socketTimeout;
+			i_connectionStarted = System.currentTimeMillis();
+
+			i_channel.connect(getServerAddress());
+		} catch (Exception l_e) {
+			throw l_e;
+		}
+	}
+
+	/** Registers the Selector that will be used to multiplex the routing requests. */
+	public void register(Selector p_selector,
+						 NonBlockingRequestThread p_manager)
+	throws ClosedChannelException
+	{
+		// Register interest in connecting.
+		SelectionKey l_key;
+		l_key = i_channel.register(p_selector,
+								   SelectionKey.OP_CONNECT);
+		l_key.attach(this);
+		i_manager = p_manager;
+	}
+
+	/**
+	 * Method to complete connection to external server. This may be called only once at the
+	 * beginning of a search request or for each separate download within the search, depending on
+	 * the conenction type.
+	 */
+	public void connectToServer(SelectionKey p_key) throws Exception
+	{
+		if (i_channel.isConnectionPending())
+		{
+			if (c_log.isDebugEnabled()) c_log.debug("Finished connect");
+			i_channel.finishConnect();
+		}
+
+		// Treat the connection time as part of the download time and add it
+		// to the stats on the webspider. Do not increment the number of downloads.
+		i_noOfConnections++;
+		addDownloadTime(System.currentTimeMillis() - i_connectionStarted);
+
+		// Call the method to set up the appropriate request.
+		if (i_initialRequestComplete)
+		{
+			if (i_isRedirect)
+			{
+				// Set up write interest - we have a request waiting to be sent.
+				p_key.interestOps(SelectionKey.OP_WRITE);
+				if (c_log.isDebugEnabled()) c_log.debug("connectToServer(): Ops set to:" + p_key.interestOps());
+			}
+			else
+			{
+				// Find next method to call and call it.
+				callNextGetResults(true, p_key);
+			}
+		} else {
+			if (c_log.isDebugEnabled()) c_log.debug("Calling initialRequest()");
+			// If initial request returns true, a download is required. If false,
+			// we need to perform the standard superclass processing and then
+			// call the first getResultsx method.
+			if (initialRequest())
+			{
+				p_key.interestOps(SelectionKey.OP_WRITE);
+				if (c_log.isDebugEnabled()) c_log.debug("connectToServer(): Ops set to:" + p_key.interestOps());
+			}
+			else
+			{
+				i_initialRequestComplete = true;
+				checkAirportMap();
+				// Find next method to call and call it.
+				callNextGetResults(true, p_key);
+			}
+		}
+	}
+
+	/**
+	 * Checks whether the HTTP structure closure(CRLF+CRLF/LF+LF) can be found in the given buffer
+	 * @param content
+	 * @param endsWith a flag indicating whether to acknowledge structure closure only if found at
+	 *            the end of the buffer
+	 * @return true if the given buffer has HTTP structure closure in it
+	 */
+	private final boolean hasHttpClosure(final byte[] content, final boolean endsWith) {
+		if (content == null) {
+			return false;
+		}
+		if (content.length < 2) {
+			return false;
+		}
+		int count = 0;
+		byte[] buffer;
+		/** If we are expecting the closure to be at the end of the buffer, then shrink it! */
+		if (endsWith && content.length > 4) {
+			buffer = new byte[4];
+			System.arraycopy(content, content.length - buffer.length, buffer, 0, buffer.length);
+		} else {
+			buffer = new byte[content.length];
+			System.arraycopy(content, 0, buffer, 0, buffer.length);
+		}
+		for (byte b : buffer) {
+			if (b == 10) {
+				count++;
+			} else if (b == 13) {
+				continue;
+			} else {
+				// Reset the chap, we expect continues LF's
+				count = 0;
+			}
+			if (count > 1 && !endsWith) {
+				return true;
+			}
+		}
+		return count > 1;
+	}
+	
+	/**
+	 * Method to read data from the Channel and determine whether the complete request has been
+	 * received.
+	 */
+	public void readData(SelectionKey p_key) throws Throwable
+	{
+		int l_noOfBytes;
+		boolean l_eos = false;
+		// Check whether we have gone past the timeout deadline and, if so
+		// throw an Exception to indicate that this is a slow read.
+		if (System.currentTimeMillis() > i_timeoutDeadline)
+		{
+			throw new ErrorCodeException(SEARCH_TIMEOUT_EXCEEDED);
+		}
+		// Read whatever has turned up on the channel into the buffer.
+		while ((l_noOfBytes = i_channel.read(i_byteBuffer)) > 0)
+		{
+			// Make the buffer available for reading.
+			i_byteBuffer.flip();
+
+			// Store a copy of the data we have read.
+			ByteBuffer l_buf = ByteBuffer.allocate(i_byteBuffer.limit());
+			l_buf.put(i_byteBuffer);
+			l_buf.position(0);
+			i_rawData.add(l_buf);
+			i_rawDataBytes += i_byteBuffer.limit();
+			i_byteBuffer.position(0);
+			/**
+			 * Gather the last X bytes from the read buffer, later on used to establish HTTP Content
+			 * closure structure
+			 */
+			if (i_byteBuffer.limit() > rawDataLastBuffer.length) {
+				i_byteBuffer.position(i_byteBuffer.limit() - rawDataLastBuffer.length);
+				i_byteBuffer.get(rawDataLastBuffer, 0, rawDataLastBuffer.length);
+			} else {
+				if (i_byteBuffer.limit() != rawDataLastBuffer.length) {
+					System.arraycopy(rawDataLastBuffer, i_byteBuffer.limit(), rawDataLastBuffer, 0, rawDataLastBuffer.length - i_byteBuffer.limit());
+				}
+				i_byteBuffer.get(rawDataLastBuffer, rawDataLastBuffer.length - i_byteBuffer.limit(), i_byteBuffer.limit());
+			}
+			// Clear the buffer and reset the decoder for further buffer-related jollity.
+			i_byteBuffer.clear();
+		}
+		// Attempt to retrieve the data length
+		if (rawDataMaxLength == -1 && i_rawDataBytes > 256) {
+			try {
+				ByteBuffer rawBuffer = ByteBuffer.allocate(i_rawDataBytes);
+				Iterator<ByteBuffer> bufferStack = i_rawData.iterator();
+				while (bufferStack.hasNext()) {
+					ByteBuffer stack = bufferStack.next();
+					rawBuffer.put(stack);
+					stack.position(0); // reset the chap!
+				}
+				rawBuffer.position(0);
+				byte[] content = String.valueOf(i_decoder.decode(rawBuffer)).getBytes();
+				i_decoder.reset();
+				/**
+				 * Verify whether the HTTP Message structure was fully buffered.
+				 * http://www.w3.org/Protocols/rfc2616/rfc2616-sec4.html#sec4
+				 */
+				if (hasHttpClosure(content, false)) {
+					boolean successful = false;
+					HttpResponse response = new HttpResponse();
+					try {
+						response.readFrom(new StreamReader(content), false, this.getSpiderName());
+						successful = true;
+					} catch (Throwable rt) {
+						successful = false;
+						QuickStatsEngine2.engine.MISC_ERRORS.logEvent("NIO:DataCheck Unable to process the response headers");
+						if (c_log.isErrorEnabled()) {
+							c_log.error("Unable to process the response headers", rt);
+						}
+					}
+					if (successful) {
+						rawDataHTTPBodyIndex = response.bytes();
+						HttpHeaderList headerList = response.getHeaderList();
+						HttpHeader hTE = headerList.getHeader(HttpResponseHeaderList.HEADER_TRANSFER_ENCODING);
+						HttpHeader hCL = headerList.getHeader(HttpResponseHeaderList.HEADER_CONTENT_LENGTH);
+						if (hTE != null) {
+							String hValue = hTE.getValue().toLowerCase();
+							if (hValue.equals("chunked")) {
+								rawDataMaxLength = 0; // the content is chunk encoded and length cannot be established
+							}
+						} else if (hCL != null) {
+							rawDataMaxLength = Integer.parseInt(hCL.getValue());
+							rawDataMaxLength += response.bytes(); // Include the already read bytes
+						}
+						if (rawDataMaxLength < 0) {
+							rawDataMaxLength = -3; // raw data length not acknowledged
+						}
+					}
+				}
+			} catch (Throwable throwable) {
+				rawDataMaxLength = -2; // an error occurred while obtaining the raw data max length
+				QuickStatsEngine2.engine.MISC_ERRORS.logEvent("NIO:DataCheck Unable to retrieve data length from headers");
+				if (c_log.isErrorEnabled()) {
+					c_log.error("Unable to retrieve data length from headers", throwable);
+				}
+			}
+		}
+		if (c_log.isDebugEnabled()) {
+			c_log.debug("RAW DATA LENGTH(Read/Total): " + i_rawDataBytes + "/" + rawDataMaxLength);
+		}
+		// If this is the end of the response...
+		if ((l_noOfBytes == -1) 
+				|| /** the data is chunk encoded */
+				(rawDataMaxLength == 0 && rawDataHTTPBodyIndex > 0 && i_rawDataBytes > rawDataHTTPBodyIndex && hasHttpClosure(rawDataLastBuffer, true))
+				|| /** we have the actual data size */
+				(rawDataMaxLength > 0 && i_rawDataBytes >= rawDataMaxLength))
+		{
+			if (l_noOfBytes != -1)
+			{
+				if (c_log.isDebugEnabled()) c_log.debug("Correctly terminated message.");
+			} else {
+				if (c_log.isDebugEnabled()) c_log.debug("Reached end of Stream.");
+				l_eos = true;
+			}
+
+			// Need to do this to set up the various objects used in WebSpider to extract
+			// information from the response, set up redirects, etc.
+			HttpResponse response = decodeResponse();
+
+			if (!i_initialRequestComplete && !i_isRedirect)
+			{
+				i_initialRequestComplete = true;
+				// Do next piece of business logic here before moving on to get results.
+				checkAirportMap();
+			}
+
+			if (i_isDownloadingComplete && !i_isRedirect)
+			{
+				// Always need to call the next method, even though there's no more I/O to be
+				// carried out - there will be a last bit of processing on the WebSpider in any case.
+				callNextGetResults(false, p_key);
+				// Then do final bit of business logic.
+				discardAlternativeDates();
+				checkTimeout();
+				checkResults();
+				checkLocations();
+				normaliseDates();
+				fetchTax();
+				fixPrices();
+				// And finish the request off.
+				finishRequest();
+			}
+			else
+			{
+				// We are expecting another request and response for this search.
+				// Reset variables for next response.
+				i_rawDataBytes = 0;
+				i_rawData = new Vector<ByteBuffer>();
+				rawDataMaxLength = -1;
+				rawDataHTTPBodyIndex = -1;
+				for (int b = 0; b < rawDataLastBuffer.length; b++) {
+					rawDataLastBuffer[b] = (byte) 0;
+				}
+				// Treat all cases where version is not equal to "HTTP/1.1" as end of stream
+				// since we will need to reconnect channel.
+				String l_version = String.valueOf(response.getVersion().get());
+				HttpHeader hConnection = response.getHeaderList().getHeader(HttpResponseHeaderList.HEADER_CONNECTION);
+				/**
+				 * http://www.w3.org/Protocols/rfc2616/rfc2616-sec8.html#sec8.1.2.1
+				 */
+				boolean isPersistentConnection = false;
+				if (proxyUrl == null && phpProxyUrl == null) {
+					isPersistentConnection = true;
+					if (hConnection != null) {
+						String hValue = hConnection.getValue().toLowerCase();
+						isPersistentConnection = hValue.startsWith("keep-alive");
+					}
+				}
+				if (!l_version.equals(HttpVersionList.VERSION_11) || !isPersistentConnection) {
+					l_eos = true;
+				}
+
+				// Do this if connection is closed by remote server.
+				if (l_eos)
+				{
+					i_channel.close();
+					if (c_log.isDebugEnabled()) c_log.debug("Closed channel after single request.");
+					// Remove request from the thread.
+					i_manager.removeRequest();
+					if (c_log.isDebugEnabled()) c_log.debug("Adding request back in");
+					// Add new request back in via the thread manager - we don't know which thread
+					// we should be using now but the manager does.
+					NonBlockingRequestThreadManagerFactory.getNonBlockingRequestThreadManager().addRequest(this);
+				} else {
+					if (!i_isRedirect)
+					{
+						// Set next request on the downloader.
+						callNextGetResults(true, p_key);
+					}
+					else
+					{
+						// We already have a request waiting - set write interest on channel.
+						p_key.interestOps(SelectionKey.OP_WRITE);
+						if (c_log.isDebugEnabled()) c_log.debug("Redirect: Ops set to:" + p_key.interestOps());
+					}
+				}
+			}
+		}
+		else
+		{
+			// Not the end of the response - still interested in reading.
+			p_key.interestOps(SelectionKey.OP_READ);
+// 			if (c_log.isDebugEnabled()) c_log.debug ("readData(): Ops set to:" + p_key.interestOps());
+		}
+	}
+
+	/** Method to write data to the Channel. */
+	public void writeData(SelectionKey p_key) throws IOException
+	{
+		if (c_log.isDebugEnabled()) c_log.debug("Entering writeData() at " + System.currentTimeMillis());
+
+		// Write whatever request is currently on the downloader to the channel.
+		String l_request = getDownloader().getRequest().toString();
+		if (c_log.isDebugEnabled()) c_log.debug("Writing(" + i_channel.socket().getLocalPort() + "):\n" + l_request);
+		addBytesSent(l_request.length());
+
+		i_channel.write(i_encoder.encode(CharBuffer.wrap(l_request)));
+
+		// Work out the deadline for the download to finish based on the timeout.
+		i_timeoutDeadline = System.currentTimeMillis() + i_socketTimeout;
+		i_downloadStarted = System.currentTimeMillis();
+
+		// Now register our read interest.
+		p_key.interestOps(SelectionKey.OP_READ);
+		if (c_log.isDebugEnabled()) c_log.debug("writeData(): Ops set to:" + p_key.interestOps());
+	}
+
+	/**
+	 * Method used in search classes to indicate that channel is no longer required and may be
+	 * closed.
+	 */
+	public void setDownloadingComplete()
+	{
+		i_isDownloadingComplete = true;
+	}
+
+	/**
+	 * Used to allow a recursive/looped call to a getResults method by decrementing the
+	 * i_methodNumber counter.
+	 */
+	public void callSameMethodNextTime()
+	{
+		i_methodNumber--;
+	}
+
+	/**
+	 * Stores the "read timeout" - actually the socket timeout - used in the download.
+	 * @param p_socketTimeout The socket timeout in milliseconds.
+	 */
+	public void setSocketTimeout(int p_socketTimeout)
+	{
+		i_socketTimeout = p_socketTimeout;
+	}
+
+	/** Implemented by all subclasses to provide the server address. */
+	abstract protected InetSocketAddress getServerAddress() throws Exception;
+
+	/**
+	 * Must be implemented by all sub-classes to encapsulate code equivalent to visitHomePage (which
+	 * this request will wrapper. Returns a boolean to indicate whether a download is required.
+	 */
+	abstract protected boolean initialRequest() throws Exception;
+
+	/**
+	 * Executes code between visitHomePage and getResults in runStage method on the superclass.
+	 */
+	private void checkAirportMap() throws Exception
+	{
+		if (getConfig().hasAirportMap())
+		{
+			checkAirportMap(true);
+		}
+	}
+
+	/**
+	 * Calls getResultsx() method on subclass where x is the value held in i_methodNumber. Will also
+	 * register interest in writing if we are expecting to carry out a download as a result of the
+	 * method call.
+	 * @param p_downloadRequired Indicates whether to set the channel's interest in writing.
+	 * @param p_key A SelectionKey that holds the channel's interests.
+	 * @throws Exception
+	 */
+	private void callNextGetResults(boolean p_downloadRequired,
+									SelectionKey p_key)
+	throws Exception
+	{
+		if (c_log.isDebugEnabled()) c_log.debug("Calling getResults" + i_methodNumber);
+		try {
+			this.getClass().getMethod("getResults" + i_methodNumber).invoke(this);
+		} catch (InvocationTargetException ite) {
+			// Throw the actual webspider exception so that known errors
+			// are handled correctly at the router level (e.g. "No Results Found")
+			Throwable spiderException = ite.getCause();
+			if (spiderException != null && spiderException instanceof Exception) {
+				// Replicating no-results-found check in PlaneStageSearch.runStage()
+				checkSpiderExceptionForNoResultsFound((Exception) spiderException);
+				throw (Exception) spiderException;
+			} else {
+				throw ite;
+			}
+		}
+		i_methodNumber++;
+
+		if (p_downloadRequired)
+		{
+			p_key.interestOps(SelectionKey.OP_WRITE);
+			if (c_log.isDebugEnabled()) c_log.debug("callNextGetResults(): Ops set to:" + p_key.interestOps());
+		}
+	}
+
+	// Convenience, ie hack, method to handle all the stuff that happens in a
+	// synchronous download on WebSpider but doesn't currently happen in the
+	// new asynchronous version.
+	private HttpResponse decodeResponse() throws IOException
+	{
+		// Update various download stats.
+		addDownload();
+		addDownloadTime(System.currentTimeMillis() - i_downloadStarted);
+
+		// Set the response on the downloader, etc.
+		HttpResponse l_httpResponse = new HttpResponse();
+		ByteBuffer l_rawBuffer = ByteBuffer.allocate(i_rawDataBytes);
+
+		// First reconstruct the full buffer from the Vector...
+		Iterator<ByteBuffer> l_buffers = i_rawData.iterator();
+
+		while (l_buffers.hasNext())
+		{
+			l_rawBuffer.put(l_buffers.next());
+		}
+
+		// Set the buffer position to the start.
+		l_rawBuffer.position(0);
+
+		addBytesReceived(l_rawBuffer.remaining());
+
+		// Stick the plain version in the HttpResponse...
+		l_httpResponse.readFrom(new StreamReader(i_decoder.decode(l_rawBuffer).toString()), this.getSpiderName());
+
+		// If response header defines a specific charset then make sure the
+		// response contents get converted accordingly
+		HttpHeader header = l_httpResponse.getHeaderList().getHeader(HttpResponse.HEADER_CONTENT_TYPE);
+		if (header != null) {
+			String contentType = header.getValue().toLowerCase();
+			int indexBegin = contentType.indexOf("charset=");
+			if (indexBegin != -1) {
+				indexBegin += 8;
+				int indexEnd = contentType.indexOf(';', indexBegin);
+				if (indexEnd == -1) {
+					indexEnd = contentType.length();
+				}
+				String charset = contentType.substring(indexBegin, indexEnd);
+				l_httpResponse.getContent().setCharset(charset);
+			}
+		}
+
+		// ...and use this to determine whether it requires unzipping.
+		if (l_httpResponse.getHeaderList().contains("Content-Encoding") &&
+			l_httpResponse.getHeaderList().getHeader("Content-Encoding").getValue().contains("gzip"))
+		{
+			decompressGzipResponse(l_httpResponse, l_rawBuffer);
+		} else {
+			if (c_log.isDebugEnabled()) {
+				c_log.debug("[GZIP] " + ((enableCompression) ? "Not Supported" : "Is Disabled"));
+			}
+		}
+		if (getDownloader().isProxyRequest()) {
+			HttpDownloader.assertProxyResponse(l_httpResponse);
+		}
+		getDownloader().setResponse(l_httpResponse);
+
+		// More stuff I've ripped off from WebSpider.
+		refererUrl = getDownloader().getRequest().getUrl().getNetUrl();
+		if (debugIsEnabled() && c_log.isDebugEnabled()) {
+			c_log.debug("[Referer] " + refererUrl.toString(true));
+		}
+
+		// Redirects - start by setting global redirect flag to false then check if we need
+		// to set up a redirect request.
+		i_isRedirect = false;
+
+		if (getDownloader().isRedirectResponse() && redirectsEnabled) {
+			handleHttpRedirect();
+		}
+
+		if (!i_isRedirect)
+		{
+			i_redirects = 0;
+
+			if (cookiesAreEnabled()) {
+				getCookieList().getCookiesFrom(getDownloader().getResponse());
+			}
+
+			if (debugIsEnabled()) if (c_log.isDebugEnabled())
+				c_log.debug ("[Http Response]\n" + getDownloader().getResponse().toString(false));
+			selectText(l_httpResponse.getContent().toString());
+
+			NetUrl l_netUrl = getDownloader().getRequest().getUrl().getNetUrl();
+
+			if (i_reloadFormList)
+			{
+				htmlFormList.setObject(new HtmlFormReader().read(l_httpResponse.toString(), l_netUrl));
+			}
+			else
+			{
+				i_reloadFormList = true;
+			}
+		}
+		return l_httpResponse;
+	}
+
+	/**
+	 * Performs an http redirect based on the redirect headers in the current response.
+	 */
+	void handleHttpRedirect() {
+		i_redirects++;
+		if ((maxRedirect == 0 || i_redirects++ >= maxRedirect) && (maxRedirect != -1)) {
+			if (c_log.isDebugEnabled()) {
+				c_log.debug("Maximum redirects hit (" + maxRedirect + "), continuing.");
+			}
+		}
+		else {
+			HttpDownloader downloader = getDownloader();
+			HttpResponse response = downloader.getResponse();
+			HttpHeaderList headerList = response.getHeaderList();
+			HttpHeader header = headerList.getHeader(HttpResponseHeaderList.HEADER_LOCATION);
+			HttpHeader headerRefresh = headerList.getHeader(HttpResponseHeaderList.HEADER_REFRESH);
+			if (header != null) {
+				locationHeader = header.getValue();
+			}
+
+			if (!(headerRefresh != null && refreshRedirectionDisabled)) {
+				if (debugIsEnabled() && c_log.isDebugEnabled()) {
+					c_log.debug("[Http Response Redirect]\n" + response.toString(false));
+				}
+
+				if (cookiesAreEnabled()) {
+					getCookieList().getCookiesFrom(response);
+				}
+
+				HttpRequest redirect = downloader.getRedirectRequest(getCookieList());
+				redirect.getVersion().set(getHttpVersion());
+				// Authorization
+				HttpHeader authorizationHeader = headerList.getHeader(HttpRequestHeaderList.HEADER_AUTHORIZATION);
+				if (authorizationHeader != null) {
+					redirect.getHeaderList().add(authorizationHeader);
+				}
+
+				// url contains a space! encode it!
+				if (redirect.getUrl().getNetUrl().getQuery().indexOf(' ') != -1) {
+					HttpQuery query = new HttpQuery(redirect.getUrl(), httpQueryCharset, false);
+					redirect.getUrl().getNetUrl().setQuery(query.toString());
+				}
+				if (enableCompression) {
+					redirect.setHeader(HttpRequestHeaderList.HEADER_ACCEPT_ENCODING, "gzip");
+				}
+
+				downloader.setRequest(redirect);
+
+				if (refererUrl != null) {
+					setHttpHeader(HttpRequestHeaderList.HEADER_REFERER, refererUrl.toString(true));
+				}
+				if (debugIsEnabled() && c_log.isDebugEnabled()) {
+					c_log.debug("[Http Request Redirect]\n" + redirect);
+				}
+				if (!proxyDisabled && proxyUrl != null) {
+					downloader.setProxyUrl(proxyUrl);
+				}
+				if (!proxyDisabled && phpProxyUrl != null) {
+					downloader.setPHPProxyUrl(phpProxyUrl);
+				}
+
+				try {
+					download(30);
+					i_isRedirect = true;
+				} catch (Exception l_e) {
+					if (c_log.isErrorEnabled()) {
+						c_log.error("Exception thrown when redirecting search", l_e);
+					}
+				}
+			}
+		}
+	}
+
+	@Override
+	protected void download(int readTimeout) throws HttpBadRequestException, IOException {
+		if (usePersistentConnections()) {
+			if (proxyUrl != null || phpProxyUrl != null) {
+				throw new HttpBadRequestException("Combination of persistent connections and proxies is not supported");
+			}
+			if (i_isDownloadingComplete) {
+				setHttpHeader(HttpRequestHeaderList.HEADER_CONNECTION, "close");
+			} else {
+				setHttpVersion();
+				setHttpHeader(HttpRequestHeaderList.HEADER_CONNECTION, "keep-alive");
+			}
+		}
+		super.download(readTimeout);
+	}
+
+	/**
+	 * Decompresses the gzip encoded contents of an http response and replaces it with the
+	 * decompressed response.
+	 * @param p_httpResponse gzip-encoded response whose contents are to be decompressed
+	 * @param p_rawBuffer raw bytes for this response
+	 * @throws StageTimeoutException
+	 */
+	void decompressGzipResponse(final HttpResponse p_httpResponse, final ByteBuffer p_rawBuffer) throws StageTimeoutException {
+
+		try {
+			// Work out where the content part of the message begins by subtracting
+			// the content length from the total response buffer size. This will
+			// be the part of the message that we decompress.
+			int l_sizeBeforeDecompress = p_httpResponse.getContent().length();
+			int l_start = p_rawBuffer.limit() - l_sizeBeforeDecompress;
+
+			// Copy the relevant portion of the buffer into a byte array to pass into
+			// the decompress method. Note - it looks as if you could do this in one
+			// step without creating another large object but:
+			//
+			// a) the compiler would probably create it anyway, and
+			// b) l_rawBuffer.get(l_subarray) returns ByteBuffer, not byte[].
+			byte[] l_subarray = new byte[p_rawBuffer.limit() - l_start];
+			p_rawBuffer.position(l_start);
+			p_rawBuffer.get(l_subarray);
+
+			if (c_log.isDebugEnabled()) c_log.debug("[GZIP] Started Decompression");
+			long l_gzipStartTime = System.currentTimeMillis();
+
+			int timeout = checkStageTimeout();
+			if (i_socketTimeout > 0) {
+				timeout = Math.min(i_socketTimeout, timeout);
+			}
+			p_httpResponse.setContent(new Gzip().decompress(timeout, l_subarray),
+									  p_httpResponse.getHeaderList().getHeader("Content-Type").getValue());
+
+			totalGZipTime += (System.currentTimeMillis() - l_gzipStartTime);
+			int l_sizeAfterDecompress = p_httpResponse.getContent().length();
+			int l_sizeSaving = l_sizeAfterDecompress - l_sizeBeforeDecompress;
+
+			if (c_log.isDebugEnabled()) {
+				c_log.debug("[GZIP] Finished Decompression");
+				c_log.debug("[GZIP] Before Size: " + l_sizeBeforeDecompress);
+				c_log.debug("[GZIP] After Size: " + l_sizeAfterDecompress);
+				c_log.debug("[GZIP] Saving: " + l_sizeSaving);
+			}
+
+			p_httpResponse.getHeaderList().removeHeader("Content-Encoding");
+		} catch (TimeoutException te) {
+			// This exception may be thrown by the decompression process
+			throw new StageTimeoutException("NIO Stage timed out (Stage timeout: " + getStageTimeout() + " ms). Error: " + te.getMessage());
+		} catch (Throwable t) {
+			if (c_log.isDebugEnabled()) c_log.debug("exception", t);
+			String l_message = t.getMessage();
+			if (l_message == null) l_message = "";
+			if (l_message.length() > 30) l_message = l_message.substring(0, 30);
+			QuickStatsEngine2.engine.MISC_ERRORS.logEvent("GZIP error 1- " + l_message);
+		}
+	}
+
+	/**
+	 * Wrapper method to ensure that we don't reload the HTML form list when we shouldn't. Will
+	 * probably need to do this with some of the other download methods as well.
+	 */
+	public void downloadHttp(int p_timeout, String p_name) throws IOException,
+																  HttpException,
+																  InterruptedException
+	{
+		super.downloadHttp(p_timeout, p_name);
+		i_reloadFormList = false;
+	}
+
+	/**
+	 * Called from the request handling thread to generate extremely interesting statistics. No,
+	 * really. (Marks start of this period of execution on search.)
+	 */
+	public void startTimer()
+	{
+		i_executionStarted = System.currentTimeMillis();
+	}
+
+	/**
+	 * As per startTimer - adds time taken during last period of execution on this search to overall
+	 * search timer.
+	 */
+	public void stopTimer()
+	{
+		i_executionTime += (System.currentTimeMillis() - i_executionStarted);
+	}
+
+	/** Stats method for measuring any latency prior to starting the request. */
+	public void setRequestAdded(long p_now)
+	{
+		i_requestAddedTime = p_now;
+	}
+
+	/** Gets latency prior to starting request for logging in quickstats. */
+	public long getRequestLatency()
+	{
+		return System.currentTimeMillis() - i_requestAddedTime;
+	}
+
+	/**
+	 * Empty method to ensure that superclass interface requirements are satisfied. getResults() is
+	 * now replaced with a series of methods getResults1(), getResults2() and so on.
+	 */
+	public void getResults()
+	{
+		// Must be implemented to satisfy the superclass but is not called.
+	}
+}

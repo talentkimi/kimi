@@ -1,0 +1,209 @@
+package core.util;
+
+
+import java.util.concurrent.Executor;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import project.tripplanner.tools.stats.QuickStats2.QuickStatsEngine2;
+import project.tripplanner.tools.stats.QuickStats2.ScheduledQuickStatsLogger;
+import core.lang.thread.ThreadManager;
+import core.lang.thread.ThreadPool.Poolable;
+
+/**
+ * A Task.
+ * <p>
+ * A Runnable with flags to indicate started and finished.
+ * <p>
+ * Catches any exception thrown from the run method and stores it.
+ */
+public abstract class Task implements Poolable {
+
+	private static final Logger log = LoggerFactory.getLogger(Task.class);
+
+
+	/** The throwable. */
+	private Throwable throwable = null;
+	/** Started? */
+	private long timeStarted = 0;
+	/** Finished? */
+	private long timeFinished = 0;
+
+	public String getTaskName() {
+		return getClass().getSimpleName();
+	}
+
+	@Override
+	public String getPoolableName() {
+		return getTaskName();
+	}
+	
+	@Override
+	public long getPoolableStartTime() {
+		return getTimeStarted();
+	}
+
+	public long getTimeStarted() {
+		return timeStarted;
+	}
+	
+	public void setTimeStarted(long timeStarted) {
+		this.timeStarted = timeStarted;
+	}
+
+	public long getTimeFinished() {
+		return timeFinished;
+	}
+	
+	/**
+	 * Returns true if the task has started.
+	 * @return true if the task has started.
+	 */
+	public final boolean hasStarted() {
+		return timeStarted > 0;
+	}
+
+	/**
+	 * Returns true if the task has finished.
+	 * @return true if the task has finished.
+	 */
+	public final boolean hasFinished() {
+		return timeFinished > 0;
+	}
+
+	/**
+	 * Returns the time elapsed.
+	 * @return the time elapsed.
+	 */
+	public final long timeElapsed() {
+		if (!hasStarted()) {
+			throw new IllegalStateException("task has not started");
+		}
+		return System.currentTimeMillis() - timeStarted;
+	}
+
+	/**
+	 * Reset the task.
+	 */
+	public final void reset() {
+		timeStarted = 0;
+		timeFinished = 0;
+		throwable = null;
+	}
+
+	/**
+	 * Returns true if this has crashed.
+	 * @return true if this has crashed.
+	 */
+	public final boolean hasCrashed() {
+		return throwable != null;
+	}
+
+	/**
+	 * Returns the throwable.
+	 * @return the throwable.
+	 */
+	public final Throwable getThrowable() {
+		return throwable;
+	}
+
+	/**
+	 * Set the throwable.
+	 * @param t the throwable.
+	 */
+	public final void setThrowable(Throwable t) {
+		this.throwable = t;
+	}
+
+	/**
+	 * Handle the given throwable.
+	 * @param t the throwable.
+	 */
+	protected void handleThrowable(Throwable t) {
+	}
+
+	/**
+	 * Runs this task
+	 */
+	public final void run() {
+		this.throwable = null;
+		this.timeFinished = 0;
+
+		this.timeStarted = System.currentTimeMillis();
+		try {
+			runTask();
+		} catch (Throwable t) {
+			setThrowable(t);
+		} finally {
+			complete();
+			if (ScheduledQuickStatsLogger.quickStatsLoggingIsEnabled) logStats();
+		}
+	}
+
+	private void logStats() {
+		try {
+			// log class name of crashed threads - maybe log each of the hierarchy levels separately
+			
+			String taskName = getClass().getSimpleName();
+//			System.err.println("THREAD CLASS NAME: "+taskName);
+			if (hasCrashed()) {
+				QuickStatsEngine2.engine.THREAD_CRASHED_TASKS.logEvent(taskName);
+//				QuickStatsEngine2.logEvent(new String[] {"Thread", "Crashed Tasks - doesnt include all threads"}, taskName);
+			}
+		} catch (Throwable t) {
+			QuickStatsEngine2.engine.MISC_ERRORS.logEvent("Error logging tasks crashed/ times");
+		}
+	}
+
+	public final void complete() {
+		try {
+			if (hasCrashed()) {
+				try {
+					handleThrowable(getThrowable());
+				} catch (Throwable t) {
+					if (log.isDebugEnabled())
+						if (log.isDebugEnabled()) log.debug ("Task Stack Trace", t);
+				}
+			}
+		} finally {
+			this.timeFinished = System.currentTimeMillis();
+		}
+	}
+
+	/**
+	 * Join with this task's thread.
+	 */
+	public void join(long sleep) throws Throwable {
+		while (!hasFinished()) {
+			if (sleep > 0)
+				Thread.sleep(sleep);
+			if (hasCrashed()) {
+				throw throwable;
+			}
+		}
+	}
+
+	/**
+	 * Start this task.
+	 */
+	public void start() {
+		final Executor executor = getExecutor();
+		if (executor != null) {
+			executor.execute(this);
+		}
+		else {
+			throw new NullExecutorException(this.getTaskName());
+		}
+	}
+
+	protected Executor getExecutor() {
+		return ThreadManager.MAIN;
+	}
+	
+	/**
+	 * Run the task.
+	 */
+	public abstract void runTask() throws Throwable;
+
+}

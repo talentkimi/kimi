@@ -1,0 +1,310 @@
+package core.nioservice;
+
+import java.io.IOException;
+import java.net.InetAddress;
+import java.nio.ByteBuffer;
+import java.nio.channels.CancelledKeyException;
+import java.nio.channels.SelectionKey;
+import java.nio.channels.Selector;
+import java.nio.channels.SocketChannel;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.Executor;
+import java.util.concurrent.atomic.AtomicBoolean;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import project.tripplanner.tools.stats.QuickStats2.QuickStatsEngine2;
+
+/**
+ * A class to manage and support a single-selecting-thread based NIO service.
+ *
+ */
+public abstract class NioService implements Runnable {
+
+	private static final Logger log = LoggerFactory.getLogger(NioService.class);
+	private static final Logger BOOT_LOG = LoggerFactory.getLogger("TripPlanner.Boot");
+
+	// The host:port combination to connect to
+	protected InetAddress hostAddress;
+	protected int port;
+
+	// The selector we'll be monitoring
+	protected Selector selector;
+
+	// The buffer into which we'll read data when it's available
+	protected ByteBuffer readBuffer = ByteBuffer.allocate(8192);
+
+	// A list of ChangeRequest instances
+	protected List<ChangeRequest> pendingChanges = new LinkedList<ChangeRequest>();
+
+	// Maps a SocketChannel to a list of ByteBuffer instances
+	protected Map<SocketChannel, List<ByteBuffer>> pendingData = new HashMap<SocketChannel, List<ByteBuffer>>();
+
+	// A manager of request handlers
+	protected NioHandlerManager handlerManager;
+
+	// An executor to execute response handlers
+	protected Executor executor;
+
+	protected String serviceName;
+
+	protected volatile boolean running = true;
+	protected AtomicBoolean shuttingDown = new AtomicBoolean(false);
+	protected boolean isCrashed = false;
+
+	protected NioService(InetAddress hostAddress, int port, Executor executor, NioHandlerManager handlerManager) throws IOException {
+		this.hostAddress = hostAddress;
+		this.port = port;
+		selector = initSelector();
+		this.executor = executor;
+		this.handlerManager = handlerManager;
+		this.setServiceName();
+	}
+
+	protected abstract Selector initSelector() throws IOException;
+
+	protected abstract Executor getExecutor();
+	protected abstract int getActiveCount();
+	protected abstract int getPoolSize();
+	protected abstract int getQueueSize();
+
+	protected void setServiceName() {
+		this.serviceName = getClass().getSimpleName();
+	}
+
+	protected String getServiceName() {
+		return serviceName;
+	}
+
+	public InetAddress getInetAddress() {
+		return hostAddress;
+	}
+
+	public int getPort() {
+		return port;
+	}
+
+	public NioHandlerManager getHandlerManager() {
+		return handlerManager;
+	}
+
+	public void setHandlerManager(NioHandlerManager handlerManager) {
+		this.handlerManager = handlerManager;
+	}
+
+	/**
+	 * Use this method to add changes initiated by threads that aren't
+	 * the selecting thread
+	 * @param channel
+	 * @param type
+	 * @param ops
+	 */
+	public void changeOpsRequest(SocketChannel channel, int type, int ops) {
+		synchronized (pendingChanges) {
+			pendingChanges.add(new ChangeRequest(channel, type, ops));
+		}
+		selector.wakeup();
+	}
+
+	public void run() {
+		if (log.isWarnEnabled()) {
+			log.warn("=== " + getServiceName() + " START ===");
+		}
+		try {
+			runService();
+		} catch (Throwable t) {
+			running = false;
+			shuttingDown.getAndSet(true);
+			isCrashed = true;
+			if (log.isErrorEnabled()) {
+				log.error(getServiceName() + " - Unexpected Throwable", t);
+			}
+			QuickStatsEngine2.engine.THREAD_CRASHED_TASKS.logEvent(getServiceName());
+		}
+
+		if (log.isWarnEnabled()) {
+			log.warn("=== " + getServiceName() + " FINISHED ===");
+			log.warn("=== " + getServiceName() + " Terminating Handler Manager ===");
+		}
+
+		handlerManager.terminate();
+
+		if (log.isWarnEnabled()) {
+			log.warn("=== " + getServiceName() + " Terminating Handler Manager DONE ===");
+			log.warn("=== " + getServiceName() + " Terminating Selector ===");
+		}
+
+		if (selector.isOpen()) {
+
+			Set<SelectionKey> keys = selector.selectedKeys();
+			for (SelectionKey key : keys) {
+				key.cancel();
+			}
+
+			try {
+				selector.close();
+			} catch (IOException e) {
+				if (log.isErrorEnabled()) {
+					log.error(getServiceName() + " - Unexpected I/O Exception closing selector", e);
+				}
+			}
+		}
+
+		if (log.isWarnEnabled()) {
+			log.warn("=== " + getServiceName() + " Terminating Selector DONE ===");
+			log.warn("=== " + getServiceName() + " Shutting down Executor ===");
+		}
+
+		shutdownExecutor();
+
+		if (log.isWarnEnabled()) {
+			log.warn("=== " + getServiceName() + " Shutting down Executor DONE === shuttingDown: " + shuttingDown.get());
+		}
+
+		shutdownComplete();
+		BOOT_LOG.info("SHUT DOWN " + getServiceName() + " done");
+	}
+
+	protected abstract void runService();
+
+	protected abstract void shutdownExecutor();
+
+	protected abstract void shutdownComplete();
+
+	protected void cleanupPendingDataMap() {
+		synchronized (pendingData) {
+			Iterator<SocketChannel> socketChannels = pendingData.keySet().iterator();
+			while (socketChannels.hasNext()) {
+				SocketChannel channel = (SocketChannel) socketChannels.next();
+				// Valid op values - Accept:16 Connect:8 Read:1 Write:4
+				if (!channel.isConnected() &&
+						!channel.isConnectionPending() &&
+						!channel.isOpen() &&
+						!channel.isRegistered() &&
+						channel.validOps() == 13) {
+					List<ByteBuffer> queue = pendingData.get(channel);
+					if (queue != null && queue.isEmpty()) {
+						socketChannels.remove();
+					}
+				}
+			}
+		}
+	}
+
+	public void shutdown() {
+
+		if (shuttingDown.getAndSet(true)) {
+			if (BOOT_LOG.isInfoEnabled()) {
+				if (running) {
+					BOOT_LOG.info("SHUT DOWN " + getServiceName() + " already being shut down...");
+				} else {
+					BOOT_LOG.info("SHUT DOWN " + getServiceName() + " is shut down");
+				}
+			}
+			return;
+		}
+
+		BOOT_LOG.info("SHUT DOWN " + getServiceName() + " shutting down...");
+
+		synchronized (pendingChanges) {
+			pendingChanges.add(new ChangeRequest(null, ChangeRequest.SHUTDOWN, 0));
+		}
+		selector.wakeup();
+	}
+
+	protected void logServiceStats() {
+		try {
+			if (log.isWarnEnabled()) {
+				StringBuilder sb = new StringBuilder("*** ");
+				sb.append(getServiceName());
+				sb.append(" STATS **************************\n\n*** Selector keys   : ");
+				sb.append(selector.keys().size());
+				sb.append("\n*** Pending changes : ");
+				sb.append(pendingChanges.size());
+				sb.append("\n*** Pending data    : ");
+				synchronized (pendingData) {
+					sb.append(pendingData.size());
+					sb.append("\n*** Pending data    :");
+					//sb.append(pendingData);
+					Iterator<SocketChannel> socketChannels = pendingData.keySet().iterator();
+					while (socketChannels.hasNext()) {
+						SocketChannel channel = (SocketChannel) socketChannels.next();
+						sb.append("\n*** Conn:");
+						sb.append(channel.isConnected());
+						sb.append(" ConnPend:");
+						sb.append(channel.isConnectionPending());
+						sb.append(" Open:");
+						sb.append(channel.isOpen());
+						sb.append(" Reg:");
+						sb.append(channel.isRegistered());
+						sb.append(" ValidOps:");
+						sb.append(channel.validOps());
+						sb.append(" ");
+						sb.append(channel);
+						sb.append(" queue=");
+						sb.append(pendingData.get(channel));
+					}
+				}
+				sb.append("\n\n");
+				sb.append(handlerManager.getStatsString());
+				sb.append("*** STATS OVER **************************");
+				log.warn(sb.toString());
+			}
+		} catch (Throwable t) {
+			if (log.isErrorEnabled()) {
+				log.error(getServiceName() + " - Unexpected Throwable when logServiceStats", t);
+			}
+			QuickStatsEngine2.engine.MISC_ERRORS.logEvent(getServiceName() + " error in logServiceStats");
+		}
+	}
+
+	protected void logShuttingDownKeys() {
+		try {
+			if (log.isWarnEnabled()) {
+				StringBuilder sb = new StringBuilder(getServiceName());
+				sb.append(" shutting down, keys: ");
+				sb.append(selector.keys().size());
+				Iterator<SelectionKey> keys = selector.keys().iterator();
+				while (keys.hasNext()) {
+					SelectionKey key = (SelectionKey) keys.next();
+					sb.append("\n> isValid:");
+					sb.append(key.isValid());
+					if (key.isValid()) {
+						try {
+							// Interest op values - Accept:16 Connect:8 Read:1 Write:4
+							sb.append(" IntOps:");
+							sb.append(key.interestOps());
+							sb.append(" ReadyOps:");
+							sb.append(key.readyOps());
+							sb.append(" isAcceptable:");
+							sb.append(key.isAcceptable());
+							sb.append(" isConnectable:");
+							sb.append(key.isConnectable());
+							sb.append(" isReadable:");
+							sb.append(key.isReadable());
+							sb.append(" isWritable:");
+							sb.append(key.isWritable());
+						} catch (CancelledKeyException e) {
+							// Ignore this exception at this point; just record it in the log
+							sb.append(" ** CancelledKeyException **");
+						}
+					}
+					sb.append(" hashCode:");
+					sb.append(key.hashCode());
+				}
+				log.warn(sb.toString());
+			}
+		} catch (Throwable t) {
+			if (log.isErrorEnabled()) {
+				log.error(getServiceName() + " - Unexpected Throwable when logShuttingDownKeys", t);
+			}
+			QuickStatsEngine2.engine.MISC_ERRORS.logEvent(getServiceName() + " error in logShuttingDownKeys");
+		}
+	}
+}

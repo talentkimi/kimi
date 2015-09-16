@@ -1,0 +1,41 @@
+K 25
+svn:wc:ra_dav:version-url
+V 69
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/request
+END
+HttpMethod.java
+K 25
+svn:wc:ra_dav:version-url
+V 85
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/request/HttpMethod.java
+END
+HttpUrl.java
+K 25
+svn:wc:ra_dav:version-url
+V 82
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/request/HttpUrl.java
+END
+HttpRequestMethodList.java
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/request/HttpRequestMethodList.java
+END
+HttpRequest.java
+K 25
+svn:wc:ra_dav:version-url
+V 86
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/request/HttpRequest.java
+END
+HttpRequestExplorer.java
+K 25
+svn:wc:ra_dav:version-url
+V 94
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/request/HttpRequestExplorer.java
+END
+HttpRequestHeaderList.java
+K 25
+svn:wc:ra_dav:version-url
+V 96
+/svn/!svn/ver/52832/branches/prod_5.20/c5/java/code/core/http/request/HttpRequestHeaderList.java
+END
